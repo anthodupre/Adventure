@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Vingt Faces</title>
+<style>
+:root{
+  --bg:#12100e; --bg2:#1b1815; --bg3:#26211c; --bg4:#322b24; --line:#3d352c;
+  --ink:#ecdfc6; --dim:#a69882; --faint:#7b6f5f;
+  --gold:#e3ad4c; --gold2:#b47f25;
+  --hp:#d2544a; --mana:#4f97e6; --xp:#8fc46a;
+  --ok:#7cc97f; --bad:#e36b5e; --crit:#f6cf5a; --near:#d9a05b;
+  --mood:#e3ad4c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --fs:17px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;overflow:hidden;
+  -webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
+body[data-mood="calme"]{--mood:#e3ad4c} body[data-mood="tension"]{--mood:#e08a3c}
+body[data-mood="combat"]{--mood:#e0524a} body[data-mood="mystere"]{--mood:#9b7fe0}
+body[data-mood="merveille"]{--mood:#54c7c0} body[data-mood="sombre"]{--mood:#7d8aa0}
+body[data-mood="joie"]{--mood:#9fd05a}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+::selection{background:var(--gold2);color:#fff}
+#app{position:fixed;inset:0;height:100vh;height:100dvh}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;min-height:0}
+.screen.on{display:flex}
+
+/* ---------- boutons & champs ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;
+  border-radius:12px;border:1px solid var(--line);background:var(--bg3);color:var(--ink);font-weight:600;
+  transition:transform .08s,background .15s,border-color .15s}
+.btn:active{transform:scale(.97)}
+.btn:hover{border-color:var(--faint)}
+.btn.primary{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--gold);color:#1c1305}
+.btn.danger{border-color:#7a3a33;color:#f0a79e}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:36px;padding:6px 12px;border-radius:10px;font-size:13.5px}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn.block{display:flex;width:100%}
+.field{display:block;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font-size:16px;outline:none}
+.field:focus{border-color:var(--gold)}
+textarea.field{resize:vertical;line-height:1.4}
+label.lab{display:block;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+.hint{font-size:13px;color:var(--dim);line-height:1.45}
+.row{display:flex;gap:10px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.sp{height:14px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
+
+/* ---------- écran titre ---------- */
+#scr-title{align-items:center;justify-content:center;padding:calc(24px + var(--sat)) 24px calc(24px + var(--sab));text-align:center;overflow:auto;
+  background:radial-gradient(900px 500px at 50% 18%,#3a2a14 0%,transparent 60%),var(--bg)}
+.t-die{width:150px;height:150px;margin-bottom:10px;filter:drop-shadow(0 10px 30px #000a);animation:floaty 6s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(5deg)}}
+.t-name{font-family:var(--serif);font-size:clamp(40px,10vw,68px);letter-spacing:.08em;color:var(--gold);font-weight:700;line-height:1;text-shadow:0 2px 0 #000}
+.t-sub{font-family:var(--serif);font-style:italic;color:var(--dim);font-size:17px;margin:12px 0 28px;max-width:420px;line-height:1.45}
+.t-menu{display:flex;flex-direction:column;gap:10px;width:min(320px,100%)}
+.t-foot{margin-top:26px;font-size:12px;color:var(--faint);line-height:1.5}
+
+/* ---------- création ---------- */
+#scr-create{background:var(--bg)}
+.c-head{padding:calc(12px + var(--sat)) 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--bg2)}
+.c-head h2{font-family:var(--serif);font-size:21px;color:var(--gold);flex:1}
+.c-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 28px}
+.c-wrap{max-width:720px;margin:0 auto}
+.c-sec{margin-bottom:26px}
+.c-sec>h3{font-family:var(--serif);font-size:18px;margin-bottom:10px;color:var(--ink)}
+.c-sec>h3 small{font-family:var(--sans);font-size:12px;color:var(--dim);font-weight:400;margin-left:8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{text-align:left;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;gap:4px;min-height:88px}
+.card .ic{font-size:24px;line-height:1}
+.card b{font-size:14.5px}
+.card span{font-size:12.5px;color:var(--dim);line-height:1.35}
+.card.sel{border-color:var(--gold);background:#2b2114;box-shadow:0 0 0 1px var(--gold) inset}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.statbox{border:1px solid var(--line);border-radius:12px;background:var(--bg2);padding:10px;display:flex;align-items:center;gap:8px}
+.statbox .nm{flex:1;min-width:0}
+.statbox .nm b{display:block;font-size:14px}
+.statbox .nm small{color:var(--dim);font-size:11.5px}
+.statbox .val{font-family:var(--mono);font-size:18px;width:30px;text-align:center}
+.statbox .md{font-family:var(--mono);font-size:12.5px;color:var(--gold);width:26px;text-align:center}
+.statbox.prof{border-color:var(--gold2)}
+.stp{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--bg3);font-size:18px;line-height:1}
+.stp:disabled{opacity:.3}
+.c-foot{padding:12px 16px calc(12px + var(--sab));border-top:1px solid var(--line);background:var(--bg2)}
+.c-foot .btn{max-width:720px;margin:0 auto}
+
+/* ---------- jeu ---------- */
+#scr-game{background:
+  radial-gradient(1100px 380px at 50% -80px,color-mix(in srgb,var(--mood) 16%,transparent),transparent 70%),var(--bg);
+  transition:background .8s}
+#hud{padding:calc(8px + var(--sat)) 12px 8px;background:#161310ee;border-bottom:1px solid var(--line);position:relative;z-index:3;display:flex;flex-direction:column;gap:8px}
+#hud::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--mood),transparent);opacity:.7}
+.hud-top{display:flex;align-items:center;gap:10px;order:1}
+.hud-loc{flex:1;min-width:0;display:flex;flex-direction:column}
+.hud-loc b{font-family:var(--serif);font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-loc small{font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-btns{display:flex;gap:6px;order:3}
+.hb{flex:1;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--bg3);font-size:17px;position:relative}
+.hb.on{border-color:var(--gold);background:#2b2114}
+.hb .dot{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;border-radius:8px;background:var(--gold);color:#1c1305;font-size:10px;font-weight:700;line-height:16px;padding:0 4px}
+.hud-bars{display:flex;gap:8px;align-items:center;order:2}
+.bar{flex:1;height:20px;cursor:pointer;border-radius:10px;background:#0b0908;border:1px solid var(--line);position:relative;overflow:hidden;min-width:0}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:10px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.bar.hp i{background:linear-gradient(180deg,#e7675c,#a8372f)}
+.bar.mana i{background:linear-gradient(180deg,#6fb0f2,#2f6fc0)}
+.bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;text-shadow:0 1px 2px #000;white-space:nowrap;font-family:var(--mono)}
+.pill{height:20px;display:flex;align-items:center;gap:4px;font-size:12px;font-family:var(--mono);white-space:nowrap;color:var(--ink)}
+.pill.lvl{flex-direction:column;align-items:stretch;gap:2px;height:auto;min-width:46px;text-align:center}
+.pill.lvl .xp{display:block;height:3px;border-radius:2px;background:#0b0908;overflow:hidden}
+.pill.lvl .xp i{display:block;height:100%;width:0;background:var(--xp);transition:width .5s}
+.god-badge{font-size:10px;font-weight:800;letter-spacing:.1em;color:#1c1305;background:var(--crit);border-radius:6px;padding:2px 6px}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.flash-heal{animation:flashh .6s}
+@keyframes flashh{0%{box-shadow:0 0 0 0 #7cc97f00}40%{box-shadow:0 0 0 4px #7cc97faa}100%{box-shadow:0 0 0 0 #7cc97f00}}
+
+#game-body{flex:1;min-height:0;display:flex}
+#game-main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
+#log{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 10px;scroll-behavior:smooth}
+#log-in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.e-narr{font-family:var(--serif);font-size:var(--fs);line-height:1.64;color:var(--ink);animation:fadeup .35s}
+.e-narr p{margin:0 0 .7em} .e-narr p:last-child{margin-bottom:0}
+.e-narr b{color:#fff2d3} .e-narr i{color:#d9cbb0}
+.e-narr.setup{color:var(--dim);font-style:italic}
+.e-narr.live::after{content:"▍";color:var(--mood);animation:blink 1s steps(2) infinite;margin-left:2px}
+.e-narr.first p:first-child::first-letter{font-size:2.6em;float:left;line-height:.85;padding:.08em .1em 0 0;color:var(--gold)}
+@keyframes blink{50%{opacity:0}}
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.e-act{display:flex;justify-content:flex-end;animation:fadeup .25s}
+.e-act span{max-width:86%;padding:9px 13px;border-radius:14px 14px 4px 14px;background:#2b2114;border:1px solid #5a431d;color:#f4e2bb;font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+.e-roll{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);animation:fadeup .3s;border-left:4px solid var(--dim)}
+.e-roll .rd{width:42px;height:42px;flex:none}
+.e-think .die .n{display:none}
+.e-roll .rt{flex:1;min-width:0;font-size:13.5px;line-height:1.45;color:var(--dim)}
+.e-roll .rt b{color:var(--ink)}
+.e-roll .rv{font-weight:800;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase}
+.v-crit{border-left-color:var(--crit)} .v-crit .rv{color:var(--crit)}
+.v-success{border-left-color:var(--ok)} .v-success .rv{color:var(--ok)}
+.v-near{border-left-color:var(--near)} .v-near .rv{color:var(--near)}
+.v-fail{border-left-color:var(--bad)} .v-fail .rv{color:var(--bad)}
+.v-fumble{border-left-color:#b02a20} .v-fumble .rv{color:#ff7b6d}
+.e-fx{display:flex;flex-wrap:wrap;gap:6px;animation:fadeup .3s}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);font-size:12.5px;font-weight:600;white-space:nowrap}
+.chip.dmg{color:#ff9d92;border-color:#6d2f29} .chip.heal{color:#a6e3a8;border-color:#2f5f33}
+.chip.mana{color:#a9cff7;border-color:#2b4d77} .chip.gold{color:#f2cf86;border-color:#6b5223}
+.chip.xp{color:#c2e6a6;border-color:#40602c} .chip.lost{color:var(--dim)} .chip.st{color:#d9c2f5;border-color:#4b3b6b}
+.chip.loc{color:var(--ink)}
+.e-loot{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;margin-top:-6px;border-radius:12px;background:linear-gradient(90deg,#2b2114,transparent);border:1px solid #4a3a1d;animation:fadeup .35s}
+.e-loot .lt{flex:1;min-width:0}
+.e-loot .lt small{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-right:8px}
+.e-loot .lt b{font-size:14.5px}
+.e-loot .lt span{display:block;font-size:12.5px;color:var(--dim);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.e-sys{text-align:center;font-size:12.5px;color:var(--dim);letter-spacing:.04em;padding:2px 10px;animation:fadeup .3s}
+.e-sys.big{color:var(--gold);font-size:14px;font-weight:700}
+.e-err{padding:12px;border-radius:12px;border:1px solid #7a3a33;background:#2a1513;color:#f3c3bc;font-size:14px;line-height:1.45}
+.e-err .row{margin-top:10px}
+.e-think{display:flex;align-items:center;gap:10px;color:var(--dim);font-style:italic;font-family:var(--serif);font-size:15px}
+.e-think svg{width:26px;height:26px;animation:spin 2.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#dock{padding:8px 12px calc(10px + var(--sab));border-top:1px solid var(--line);background:#161310f2}
+#dock-in{max-width:720px;margin:0 auto}
+#choices{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#choices::-webkit-scrollbar{display:none}
+#choices:empty{display:none}
+.choice{flex:none;max-width:78vw;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg3);font-size:13.5px;line-height:1.3;text-align:left;color:var(--ink)}
+.choice:hover{border-color:var(--mood)}
+.inrow{display:flex;gap:8px;align-items:flex-end}
+#inp{flex:1;min-height:44px;max-height:132px;padding:11px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font-size:16px;line-height:1.35;resize:none;outline:none;font-family:var(--sans)}
+#inp:focus{border-color:var(--mood)}
+#send{width:46px;height:46px;border-radius:14px;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#1c1305;font-size:20px;font-weight:800;flex:none}
+#dock.busy #send,#dock.busy .choice{opacity:.4;pointer-events:none}
+
+/* ---------- panneau (onglets) ---------- */
+#panel{position:fixed;inset:0;z-index:20;display:none}
+#panel.open{display:block}
+.p-scrim{position:absolute;inset:0;background:#000a;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.p-card{position:absolute;left:0;right:0;bottom:0;max-height:90%;height:90%;background:var(--bg2);border-top:1px solid var(--line);border-radius:18px 18px 0 0;display:flex;flex-direction:column;animation:slideup .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideup{from{transform:translateY(40px);opacity:0}}
+.p-tabs{display:flex;gap:2px;padding:8px 8px 0;border-bottom:1px solid var(--line);align-items:flex-end}
+.p-tab{flex:1;padding:8px 2px 9px;border-radius:10px 10px 0 0;font-size:11px;color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid transparent;border-bottom:0;white-space:nowrap}
+.p-tab .ic{font-size:19px}
+.p-tab.on{background:var(--bg);border-color:var(--line);color:var(--gold)}
+.p-close{width:38px;height:38px;font-size:18px;color:var(--dim);margin-bottom:4px;flex:none}
+.p-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(18px + var(--sab));background:var(--bg)}
+.p-h{font-family:var(--serif);font-size:18px;color:var(--gold);margin:0 0 4px}
+.p-sub{font-size:12.5px;color:var(--dim);margin-bottom:12px;line-height:1.4}
+.sec-t{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:18px 0 8px}
+.empty{color:var(--faint);font-style:italic;font-family:var(--serif);padding:14px 4px;text-align:center}
+
+.invgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.tile{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--bg2);padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:98px}
+.tile:hover{border-color:var(--faint)}
+.tile.eq{border-color:var(--gold);background:#2b2114}
+.tile .nm{font-size:11px;line-height:1.2;text-align:center;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.tile .q{position:absolute;top:4px;right:5px;font-family:var(--mono);font-size:11px;font-weight:700;color:#1c1305;background:var(--gold);border-radius:6px;padding:0 5px;line-height:16px}
+.tile .e{position:absolute;top:4px;left:5px;font-size:10px;font-weight:800;color:var(--gold)}
+.spr{display:block;image-rendering:pixelated;image-rendering:crisp-edges;flex:none}
+.spr.pending{border-radius:8px;background:linear-gradient(100deg,#2a241e 30%,#3a3128 50%,#2a241e 70%);background-size:220% 100%;animation:shim 1.1s linear infinite;position:relative}
+.spr.pending::after{content:"✦";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gold2);font-size:16px;animation:blink 1.2s steps(2) infinite}
+@keyframes shim{to{background-position:-220% 0}}
+.det-top{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.det-top .frame{padding:8px;border-radius:14px;background:var(--bg2);border:1px solid var(--line)}
+.det-top h3{font-family:var(--serif);font-size:20px;line-height:1.2}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.tag.g{color:var(--gold);border-color:var(--gold2)}
+.det-desc{font-family:var(--serif);font-size:16px;line-height:1.55;color:#dccfb5;margin-bottom:14px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.back{font-size:13.5px;color:var(--dim);margin-bottom:10px;display:inline-flex;gap:6px;align-items:center;min-height:32px}
+
+.hero-top{display:flex;gap:14px;align-items:center}
+.hero-top h3{font-family:var(--serif);font-size:22px}
+.hero-top p{font-size:13px;color:var(--dim);line-height:1.4;margin-top:2px}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sbox{border:1px solid var(--line);border-radius:12px;background:var(--bg2);padding:8px 6px;text-align:center;position:relative}
+.sbox.prof{border-color:var(--gold2)}
+.sbox small{display:block;font-size:10.5px;letter-spacing:.1em;color:var(--dim)}
+.sbox b{display:block;font-family:var(--mono);font-size:20px;margin:2px 0}
+.sbox i{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--gold)}
+.sbox .plus{position:absolute;top:-8px;right:-6px;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#1c1305;font-weight:800;font-size:16px;line-height:26px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #2a251f;font-size:14px}
+.kv span:first-child{color:var(--dim)}
+.kv span:last-child{text-align:right}
+.li{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);margin-bottom:8px;text-align:left;width:100%}
+.li .lt{flex:1;min-width:0}
+.li .lt b{display:block;font-size:14.5px}
+.li .lt span{display:block;font-size:12.5px;color:var(--dim);line-height:1.4}
+.li .cost{font-family:var(--mono);font-size:13px;color:#a9cff7;white-space:nowrap}
+.quest{padding:10px 12px;border-left:3px solid var(--gold);background:var(--bg2);border-radius:0 10px 10px 0;margin-bottom:8px}
+.quest.done{border-left-color:var(--ok);opacity:.75} .quest.fail{border-left-color:var(--bad);opacity:.6}
+.quest b{display:block;font-size:14.5px} .quest span{font-size:13px;color:var(--dim);line-height:1.4}
+.chron{font-family:var(--serif);font-size:15px;line-height:1.55;color:#cdbfa5;white-space:pre-wrap}
+.places{display:flex;flex-wrap:wrap;gap:6px}
+.set-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2a251f}
+.set-row .grow b{display:block;font-size:14.5px} .set-row .grow small{color:var(--dim);font-size:12.5px;line-height:1.35;display:block}
+.sw{width:50px;height:30px;border-radius:15px;background:var(--bg4);border:1px solid var(--line);position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--dim);transition:left .15s,background .15s}
+.sw.on{background:#5a431d;border-color:var(--gold)} .sw.on::after{left:23px;background:var(--gold)}
+select.field{appearance:none;-webkit-appearance:none;padding-right:28px;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);background-position:calc(100% - 16px) 19px,calc(100% - 11px) 19px;background-size:5px 5px;background-repeat:no-repeat}
+.devbox{border:1px dashed var(--crit);border-radius:12px;padding:12px;margin-top:14px;background:#221c0c}
+.devbox h4{margin:0 0 8px;color:var(--crit);font-size:13px;letter-spacing:.12em}
+.devgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+pre.dump{font-family:var(--mono);font-size:11px;line-height:1.4;background:#0b0908;border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;max-height:55vh;white-space:pre-wrap;word-break:break-word;color:#cdbfa5;margin:0}
+
+/* ---------- modales ---------- */
+.modal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:16px;background:#000b;animation:fade .2s}
+.m-card{width:min(480px,100%);max-height:92%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:18px;animation:pop .22s cubic-bezier(.2,.9,.3,1.2)}
+.m-card.wide{width:min(640px,100%)}
+@keyframes pop{from{transform:scale(.94);opacity:0}}
+.m-title{font-family:var(--serif);font-size:21px;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.m-title span{flex:1}
+.m-x{width:34px;height:34px;color:var(--dim);font-size:18px}
+.m-text{font-size:14.5px;line-height:1.5;color:#dccfb5;margin-bottom:14px}
+.m-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.m-acts .btn{flex:1;min-width:120px}
+.slot{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg)}
+.slot b{font-size:14.5px} .slot small{display:block;color:var(--dim);font-size:12.5px;margin:2px 0 8px;line-height:1.4}
+
+/* ---------- dé ---------- */
+#dice{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:radial-gradient(closest-side,#000c,#000e)}
+#dice.on{display:flex;animation:fade .2s}
+.d-card{width:min(400px,100%);text-align:center;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:20px 18px 16px;animation:pop .25s cubic-bezier(.2,.9,.3,1.2)}
+.d-kick{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.d-title{font-family:var(--serif);font-size:24px;color:var(--gold);margin:2px 0 6px}
+.d-reason{font-family:var(--serif);font-style:italic;color:#dccfb5;font-size:15.5px;line-height:1.45;margin-bottom:12px}
+.d-dc{display:inline-flex;align-items:baseline;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);margin-bottom:8px}
+.d-dc b{font-family:var(--mono);font-size:20px} .d-dc span{font-size:12.5px;color:var(--dim)}
+.d-mods{font-size:12.5px;color:var(--dim);line-height:1.6;margin-bottom:4px}
+.d-mods b{color:var(--ink);font-family:var(--mono)}
+.d-mana{font-size:13px;color:#a9cff7;margin:4px 0}
+.d-warn{font-size:13px;color:#ffb2a8;margin:6px 0;line-height:1.4}
+.d-dice{display:flex;justify-content:center;gap:14px;margin:14px 0 8px}
+.d20{width:128px;height:128px;cursor:pointer;filter:drop-shadow(0 8px 18px #000a);transition:transform .15s}
+.d-dice.two .d20{width:104px;height:104px}
+.d20:active{transform:scale(.95)}
+.die .o{fill:#3a2a12;stroke:var(--gold);stroke-width:2.5;stroke-linejoin:round}
+.die .i{fill:#5a431d;stroke:var(--gold);stroke-width:1.6;stroke-linejoin:round}
+.die .l{stroke:var(--gold);stroke-width:1.3;fill:none;opacity:.75}
+.die .n{font-family:var(--mono);font-weight:800;font-size:26px;fill:#fff3d6;text-anchor:middle}
+.d20.rolling{animation:tumble .5s linear infinite}
+.d20.idle{animation:wob 1.6s ease-in-out infinite}
+.d20.drop{opacity:.35}
+@keyframes tumble{0%{transform:rotate(0) scale(1)}25%{transform:rotate(90deg) scale(1.08) translateY(-8px)}50%{transform:rotate(180deg) scale(1)}75%{transform:rotate(270deg) scale(1.08) translateY(-8px)}100%{transform:rotate(360deg) scale(1)}}
+@keyframes wob{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.d20.land{animation:land .45s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes land{from{transform:scale(1.35) rotate(20deg)}to{transform:none}}
+.die.r-crit .o,.die.r-crit .i{fill:#7a5a10;stroke:var(--crit)} .d20.r-crit{filter:drop-shadow(0 0 22px #f6cf5aaa)}
+.die.r-fumble .o,.die.r-fumble .i{fill:#4a1512;stroke:#ff7b6d}
+.d-hint{font-size:13px;color:var(--dim);min-height:20px;margin-top:6px}
+.d-res{font-family:var(--mono);font-size:15px;margin-top:6px;min-height:22px}
+.d-verdict{font-family:var(--serif);font-size:26px;font-weight:700;min-height:34px;margin-top:2px}
+.d-verdict.v-crit{color:var(--crit)} .d-verdict.v-success{color:var(--ok)} .d-verdict.v-near{color:var(--near)}
+.d-verdict.v-fail{color:var(--bad)} .d-verdict.v-fumble{color:#ff7b6d}
+.d-cancel{margin-top:10px;font-size:13.5px;color:var(--dim);min-height:36px;padding:0 14px}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed;left:0;right:0;top:calc(10px + var(--sat));z-index:60;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{padding:9px 16px;border-radius:999px;background:#2b2114;border:1px solid var(--gold2);color:#f4e2bb;font-size:13.5px;font-weight:600;box-shadow:0 6px 20px #0009;animation:toast 2.6s forwards}
+@keyframes toast{0%{opacity:0;transform:translateY(-10px)}10%,80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px)}}
+
+/* ---------- grand écran : panneau ancré ---------- */
+@media (min-width:720px){
+  #hud{display:grid;grid-template-columns:1fr auto;grid-template-areas:"top btns" "bars bars";column-gap:16px}
+  .hud-top{grid-area:top} .hud-btns{grid-area:btns} .hud-bars{grid-area:bars}
+  .hb{flex:none;width:40px;height:38px}
+}
+@media (min-width:1000px){
+  #panel{position:static;display:block;width:400px;flex:none;border-left:1px solid var(--line);z-index:1}
+  .p-scrim,.p-close{display:none}
+  .p-card{position:static;height:100%;max-height:none;border-radius:0;border-top:0;animation:none}
+  #log{padding:26px 28px 12px}
+}
+@media (prefers-reduced-motion:reduce){ *{animation-duration:.01s !important;transition-duration:.01s !important} }
+</style>
+</head>
+<body data-mood="calme">
+<div id="app">
+
+  <!-- ===== Titre ===== -->
+  <section id="scr-title" class="screen on">
+    <svg class="t-die" viewBox="0 0 100 100" aria-hidden="true">
+      <polygon points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" fill="#3a2a12" stroke="#e3ad4c" stroke-width="2.5" stroke-linejoin="round"/>
+      <polygon points="50,22 78,68 22,68" fill="#5a431d" stroke="#e3ad4c" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M50,3 L50,22 M91,26.5 L50,22 M9,26.5 L50,22 M91,26.5 L78,68 M9,26.5 L22,68 M91,73.5 L78,68 M9,73.5 L22,68 M50,97 L78,68 M50,97 L22,68" stroke="#e3ad4c" stroke-width="1.3" fill="none" opacity=".75"/>
+      <text x="50" y="58" font-family="ui-monospace,Menlo,monospace" font-weight="800" font-size="26" fill="#fff3d6" text-anchor="middle">20</text>
+    </svg>
+    <h1 class="t-name">VINGT FACES</h1>
+    <p class="t-sub">Une aventure sans rails. Écris ce que tu veux tenter — n'importe quoi. Le dé décide du reste.</p>
+    <div class="t-menu">
+      <button class="btn primary" id="t-continue" style="display:none">Continuer l'aventure</button>
+      <button class="btn" id="t-new">Nouvelle aventure</button>
+      <button class="btn" id="t-load">Charger une partie</button>
+      <button class="btn ghost" id="t-set">Réglages &amp; clé API</button>
+    </div>
+    <p class="t-foot" id="t-foot"></p>
+  </section>
+
+  <!-- ===== Création ===== -->
+  <section id="scr-create" class="screen">
+    <div class="c-head"><button class="btn sm ghost" id="c-back">← Retour</button><h2>Ton héros, ton monde</h2></div>
+    <div class="c-body"><div class="c-wrap" id="c-wrap"></div></div>
+    <div class="c-foot"><button class="btn primary block" id="c-go">Commencer l'aventure</button></div>
+  </section>
+
+  <!-- ===== Jeu ===== -->
+  <section id="scr-game" class="screen">
+    <header id="hud">
+      <div class="hud-top">
+        <div class="hud-loc"><b id="h-loc">…</b><small id="h-time"></small></div>
+        <span class="god-badge" id="h-god" style="display:none">DIEU</span>
+        <div class="pill">🪙 <b id="h-gold">0</b></div>
+        <div class="pill lvl"><span>Niv. <b id="h-lvl">1</b></span><span class="xp"><i id="xp-fill"></i></span></div>
+      </div>
+      <div class="hud-btns">
+        <button class="hb" data-tab="inv" title="Inventaire">🎒</button>
+        <button class="hb" data-tab="hero" title="Héros">👤</button>
+        <button class="hb" data-tab="spells" title="Grimoire">✨</button>
+        <button class="hb" data-tab="journal" title="Journal">📜</button>
+        <button class="hb" id="b-save" title="Sauvegarder">💾</button>
+        <button class="hb" data-tab="settings" title="Réglages">⚙️</button>
+      </div>
+      <div class="hud-bars">
+        <div class="bar hp" id="hp-bar"><i id="hp-fill"></i><span id="hp-txt"></span></div>
+        <div class="bar mana" id="mana-bar"><i id="mana-fill"></i><span id="mana-txt"></span></div>
+      </div>
+    </header>
+    <div id="game-body">
+      <div id="game-main">
+        <main id="log"><div id="log-in"></div></main>
+        <footer id="dock"><div id="dock-in">
+          <div id="choices"></div>
+          <div class="inrow">
+            <textarea id="inp" rows="1" placeholder="Que fais-tu ? Tout est possible…" autocomplete="off" autocapitalize="sentences"></textarea>
+            <button id="send" title="Envoyer">➤</button>
+          </div>
+        </div></footer>
+      </div>
+      <aside id="panel">
+        <div class="p-scrim"></div>
+        <div class="p-card">
+          <nav class="p-tabs" id="p-tabs"></nav>
+          <div class="p-body" id="p-body"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<div id="dice"></div>
+<div id="modals"></div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   VINGT FACES — jeu de rôle textuel à la D&D, narré par Claude.
+   Fichier unique : ouvre-le dans l'aperçu de Koder ou dans un navigateur.
+   Le programme tient les comptes et lance les dés ; l'IA arbitre et raconte.
+   ===================================================================== */
+
+// ---------------------------------------------------------------- constantes
+const MODEL = 'claude-sonnet-5-5';     // modèle demandé
+const EFFORT = 'low';                  // effort demandé
+const API_URL = 'https://api.anthropic.com/v1/messages';
+const API_VERSION = '2026-10-21';
+const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
+// Tarifs Sonnet 5.5 ($ par million de tokens) — pour l'estimation du panneau DEV.
+const PRICE = { in: 2, out: 10, cacheRead: 0.10, cacheWrite: 2.5 };
+
+const STATS = ['FOR', 'DEX', 'CON', 'INT', 'SAG', 'CHA'];
+const STAT_NAMES = { FOR: 'Force', DEX: 'Dextérité', CON: 'Constitution', INT: 'Intelligence', SAG: 'Sagesse', CHA: 'Charisme' };
+const STAT_HINT = { FOR: 'frapper, soulever, forcer', DEX: 'esquiver, viser, se faufiler', CON: 'encaisser, résister, tenir', INT: 'savoir, déduire, magie savante', SAG: 'percevoir, soigner, pressentir', CHA: 'convaincre, bluffer, charmer' };
+const ITEM_TYPES = ['arme', 'armure', 'accessoire', 'consommable', 'outil', 'cle', 'tresor', 'materiau', 'creature', 'divers'];
+const TYPE_LABEL = { arme: '⚔️ Arme', armure: '🛡️ Armure', accessoire: '💍 Accessoire', consommable: '🧪 Consommable', outil: '🔧 Outil', cle: '🗝️ Objet clé', tresor: '💎 Trésor', materiau: '🪵 Matériau', creature: '🐾 Créature', divers: '📦 Divers' };
+const SLOT_OF = { arme: 'arme', armure: 'armure', accessoire: 'accessoire' };
+const SLOT_MAX = { arme: 1, armure: 1, accessoire: 2 };
+const MOODS = ['calme', 'tension', 'combat', 'mystere', 'merveille', 'sombre', 'joie'];
+const DIFFS = {
+  histoire: { name: 'Histoire', icon: '📖', desc: 'Jets plus cléments (DD −2), dégâts réduits de moitié.', dc: -2, dmg: 0.5 },
+  normal:   { name: 'Aventure', icon: '⚔️', desc: 'L\'équilibre classique d\'une table de jeu de rôle.', dc: 0, dmg: 1 },
+  hardcore: { name: 'Hardcore', icon: '💀', desc: 'Jets plus durs (DD +2), dégâts ×1,5, pas de retour en arrière.', dc: 2, dmg: 1.5 }
+};
+
+const WORLDS = [
+  { id: 'fantasy', icon: '🏰', name: 'Fantasy médiévale', short: 'Royaumes anciens, ruines hantées, dragons et magie arcanique.', pitch: 'Un monde de royaumes anciens, de forêts profondes, de ruines hantées, de dragons et de magie arcanique. Les routes sont dangereuses et les tavernes pleines de rumeurs.' },
+  { id: 'scifi', icon: '🚀', name: 'Space opera', short: 'Stations délabrées, contrebandiers, vestiges d\'une civilisation disparue.', pitch: 'Une galaxie de stations délabrées, de planètes-frontières, de corporations, de contrebandiers et de vestiges d\'une civilisation disparue. La « magie » y est psionique ou technologie oubliée ; le mana est l\'énergie psi.' },
+  { id: 'postapo', icon: '☢️', name: 'Post-apocalypse', short: 'Villes englouties, clans, bunkers scellés et anomalies.', pitch: 'Des décennies après la chute. Villes englouties par la végétation, clans, caravanes, bunkers scellés et mutations étranges. La « magie » vient des anomalies et des artefacts d\'avant.' },
+  { id: 'pirate', icon: '🏴‍☠️', name: 'Mers maudites', short: 'Ports francs, îles inconnues, malédictions et abysses.', pitch: 'Un archipel sans fin de ports francs, d\'îles non cartographiées, de flottes rivales, de malédictions et de créatures des abysses. La magie est affaire de pactes, de marées et de vaudou.' },
+  { id: 'horror', icon: '🕯️', name: 'Horreur gothique', short: 'Brume, manoirs décrépits et choses anciennes qui rôdent.', pitch: 'Une contrée de brume, de manoirs décrépits, de villages superstitieux et de secrets de famille. Des choses anciennes rôdent. La magie est occulte, puissante et toujours payée au prix fort.' },
+  { id: 'cyber', icon: '🌃', name: 'Cyberpunk', short: 'Néons, mégacorpos, implants et IA renégates.', pitch: 'Une mégalopole de néons sous la pluie acide : mégacorporations, gangs, implants, hackers et IA renégates. La « magie » est le piratage neural et les implants ; le mana est la charge de ton interface.' },
+  { id: 'myth', icon: '⚡', name: 'Âge des mythes', short: 'Dieux capricieux, oracles, monstres et héros.', pitch: 'Un monde antique où les dieux marchent parmi les mortels : cités de marbre, oracles, monstres légendaires, héros et destins tressés par des puissances capricieuses.' },
+  { id: 'custom', icon: '✍️', name: 'Sur mesure', short: 'Décris ton propre univers.', pitch: '' }
+];
+
+const ARCHS = [
+  { id: 'combattant', icon: '⚔️', name: 'Combattant', desc: 'Solide et direct. Encaisse et frappe fort.', prof: ['FOR', 'CON'], hp: 16, mana: 4, spells: 0, base: { FOR: 15, DEX: 12, CON: 14, INT: 8, SAG: 10, CHA: 13 } },
+  { id: 'filou', icon: '🗝️', name: 'Filou', desc: 'Discret, agile, menteur de talent.', prof: ['DEX', 'CHA'], hp: 12, mana: 6, spells: 0, base: { FOR: 8, DEX: 15, CON: 12, INT: 13, SAG: 10, CHA: 14 } },
+  { id: 'arcaniste', icon: '🔮', name: 'Arcaniste', desc: 'Fragile, mais la magie lui obéit.', prof: ['INT', 'SAG'], hp: 10, mana: 14, spells: 3, base: { FOR: 8, DEX: 12, CON: 10, INT: 15, SAG: 14, CHA: 13 } },
+  { id: 'eclaireur', icon: '🏹', name: 'Éclaireur', desc: 'Pisteur, survivant, œil perçant.', prof: ['DEX', 'SAG'], hp: 13, mana: 8, spells: 1, base: { FOR: 12, DEX: 15, CON: 13, INT: 10, SAG: 14, CHA: 8 } },
+  { id: 'charmeur', icon: '🎭', name: 'Beau-parleur', desc: 'Les mots sont ses meilleures armes.', prof: ['CHA', 'INT'], hp: 11, mana: 10, spells: 1, base: { FOR: 8, DEX: 13, CON: 10, INT: 14, SAG: 12, CHA: 15 } },
+  { id: 'mystique', icon: '🌙', name: 'Mystique', desc: 'Guérisseur, canal de forces anciennes.', prof: ['SAG', 'CON'], hp: 13, mana: 12, spells: 2, base: { FOR: 10, DEX: 8, CON: 14, INT: 12, SAG: 15, CHA: 13 } }
+];
+const NAMES = ['Aldric', 'Maëlle', 'Séraphine', 'Corvin', 'Ysolde', 'Théobald', 'Nyx', 'Oriane', 'Baltazar', 'Lior', 'Elowen', 'Gauvain', 'Zéphyr', 'Morwenna', 'Cassian', 'Ilse', 'Rurik', 'Tamsin', 'Octave', 'Vesper'];
+
+// ---------------------------------------------------------------- utilitaires
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const int = (v, d) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? n : (d || 0); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const fmtMod = m => (m >= 0 ? '+' : '−') + Math.abs(m);
+const fmtModA = m => (m >= 0 ? '+' : '-') + Math.abs(m);   // version ASCII pour l'IA
+
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat(3)) {
+    if (kid == null || kid === false) continue;
+    e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return e;
+}
+function cleanText(s, max) {
+  s = String(s == null ? '' : s).replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').trim();
+  if (max && s.length > max) s = s.slice(0, max - 1).trimEnd() + '…';
+  return s;
+}
+function norm(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+x\s*\d+$/, '').replace(/[’']/g, ' ')
+    .replace(/^(une|un|des|les|le|la|du|de|l|d|the|an|a)\s+/, '')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+// Mini-markdown : **gras**, *italique*, paragraphes.
+function md(t) {
+  const s = esc(t).replace(/\*\*([^*]+?)\*\*/g, '<b>$1</b>').replace(/\*([^*\n]+?)\*/g, '<i>$1</i>');
+  return s.split(/\n{2,}/).map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('');
+}
+function d20() {
+  try { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % 20 + 1; }
+  catch (e) { return Math.floor(Math.random() * 20) + 1; }
+}
+function d6() { return Math.floor(Math.random() * 6) + 1; }
+function fmtDate(ts) {
+  try { return new Date(ts).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+  catch (e) { return ''; }
+}
+
+// ---------------------------------------------------------------- stockage
+const store = {
+  mem: {}, ok: true,
+  get(k) {
+    let v = null;
+    try { v = localStorage.getItem(k); } catch (e) { this.ok = false; }
+    if (v == null) v = this.mem[k] || null;
+    if (v == null) return null;
+    try { return JSON.parse(v); } catch (e) { return null; }
+  },
+  set(k, val) {
+    const s = JSON.stringify(val);
+    this.mem[k] = s;
+    try { localStorage.setItem(k, s); return true; } catch (e) { this.ok = false; return false; }
+  },
+  del(k) { delete this.mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+};
+const S = Object.assign({ apiKey: '', sound: true, textSize: 17, narrLang: 'Français', dev: false, god: false, forceDie: 0, useFallbacks: true },
+  store.get('vf_settings') || {});
+function saveSettings() { store.set('vf_settings', S); }
+
+// ---------------------------------------------------------------- sons (WebAudio, aucun fichier)
+const Snd = {
+  ctx: null,
+  init() {
+    if (!S.sound) return;
+    try {
+      if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.ctx = new AC(); }
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    } catch (e) {}
+  },
+  tone(f, dur, type, vol, delay) {
+    if (!S.sound || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime + (delay || 0);
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol || 0.08, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(t); o.stop(t + dur + 0.03);
+    } catch (e) {}
+  },
+  dice() { for (let i = 0; i < 10; i++) this.tone(170 + Math.random() * 260, 0.045, 'square', 0.045, i * 0.085 + Math.random() * 0.02); },
+  good() { [523, 659, 784].forEach((f, i) => this.tone(f, 0.17, 'triangle', 0.09, i * 0.09)); },
+  crit() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.22, 'triangle', 0.1, i * 0.08)); },
+  bad() { [220, 175].forEach((f, i) => this.tone(f, 0.26, 'sawtooth', 0.055, i * 0.14)); },
+  fumble() { [196, 156, 117, 87].forEach((f, i) => this.tone(f, 0.3, 'sawtooth', 0.065, i * 0.13)); },
+  loot() { [880, 1175].forEach((f, i) => this.tone(f, 0.13, 'sine', 0.07, i * 0.07)); },
+  level() { [392, 523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.24, 'triangle', 0.09, i * 0.1)); },
+  tap() { this.tone(660, 0.05, 'sine', 0.04); }
+};
+
+// ---------------------------------------------------------------- API Claude
+class ApiError extends Error {
+  constructor(msg, kind, status) { super(msg); this.kind = kind; this.status = status; }
+}
+const DEV = { lastReq: null, lastRes: null, total: { in: 0, out: 0, cr: 0, cw: 0, calls: 0 } };
+
+// Extrait, pendant le streaming, la valeur (partielle) d'un champ texte de premier niveau d'un JSON incomplet.
+function partialField(buf, key) {
+  let i = 0, depth = 0, inStr = false, strStart = 0, lastStr = null, pendingKey = null;
+  const n = buf.length;
+  while (i < n) {
+    const c = buf[i];
+    if (inStr) {
+      if (c === '\\') { i += 2; continue; }
+      if (c === '"') { inStr = false; lastStr = buf.slice(strStart, i); }
+      i++; continue;
+    }
+    if (c === '"') {
+      if (depth === 1 && pendingKey === key) return decodePartialString(buf, i + 1);
+      inStr = true; strStart = i + 1;
+    } else if (c === '{' || c === '[') { depth++; if (depth > 1) pendingKey = null; }
+    else if (c === '}' || c === ']') depth--;
+    else if (c === ':') { if (depth === 1 && lastStr != null) pendingKey = lastStr; }
+    else if (c === ',') { if (depth === 1) pendingKey = null; }
+    i++;
+  }
+  return null;
+}
+function decodePartialString(buf, start) {
+  let i = start; const n = buf.length;
+  while (i < n) { if (buf[i] === '\\') { i += 2; continue; } if (buf[i] === '"') break; i++; }
+  let raw = buf.slice(start, Math.min(i, n));
+  raw = raw.replace(/\\u[0-9a-fA-F]{0,3}$/, '').replace(/(^|[^\\])((?:\\\\)*)\\$/, '$1$2');
+  try { return JSON.parse('"' + raw + '"'); }
+  catch (e) { return raw.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\'); }
+}
+
+function makeAccumulator(onText) {
+  return {
+    blocks: [], stop: null, usage: { in: 0, out: 0, cr: 0, cw: 0 }, model: null,
+    text() { return this.blocks.filter(b => b && b.type === 'text').map(b => b.text).join(''); },
+    handle(ev) {
+      if (!ev || !ev.type) return;
+      if (ev.type === 'message_start' && ev.message) {
+        this.model = ev.message.model;
+        const u = ev.message.usage || {};
+        this.usage.in = u.input_tokens || 0; this.usage.cr = u.cache_read_input_tokens || 0; this.usage.cw = u.cache_creation_input_tokens || 0;
+      } else if (ev.type === 'content_block_start') {
+        const cb = ev.content_block || {};
+        this.blocks[ev.index] = { type: cb.type, text: cb.text || '' };
+      } else if (ev.type === 'content_block_delta') {
+        const b = this.blocks[ev.index];
+        if (b && ev.delta && ev.delta.type === 'text_delta') { b.text += ev.delta.text || ''; if (onText) onText(this.text()); }
+      } else if (ev.type === 'message_delta') {
+        if (ev.delta && ev.delta.stop_reason) this.stop = ev.delta.stop_reason;
+        if (ev.usage && ev.usage.output_tokens != null) this.usage.out = ev.usage.output_tokens;
+      } else if (ev.type === 'error') {
+        const er = ev.error || {};
+        throw mapApiError(er.type === 'overloaded_error' ? 529 : 500, er);
+      }
+    }
+  };
+}
+function feedSSE(acc, state, chunk) {
+  state.buf += chunk;
+  let m;
+  while ((m = state.buf.match(/\r?\n\r?\n/))) {
+    const block = state.buf.slice(0, m.index);
+    state.buf = state.buf.slice(m.index + m[0].length);
+    const data = block.split(/\r?\n/).filter(l => l.startsWith('data:')).map(l => l.slice(5).trimStart()).join('\n');
+    if (!data || data === '[DONE]') continue;
+    let ev; try { ev = JSON.parse(data); } catch (e) { continue; }
+    acc.handle(ev);
+  }
+}
+function mapApiError(status, er) {
+  const type = (er && er.type) || '', msg = (er && er.message) || '';
+  if (status === 401) return new ApiError('Clé API refusée. Vérifie ta clé Anthropic dans les réglages.', 'auth', status);
+  if (status === 403) return new ApiError('Cette clé API n\'a pas la permission d\'utiliser ce modèle. ' + msg, 'auth', status);
+  if (status === 429) return new ApiError('Limite de requêtes atteinte. Patiente quelques secondes.', 'rate', status);
+  if (status === 529 || type === 'overloaded_error') return new ApiError('Les serveurs de Claude sont surchargés. Réessaie dans un instant.', 'overloaded', status);
+  if (status >= 500) return new ApiError('Erreur du serveur Claude (' + status + ').', 'server', status);
+  if (status === 400 && /fallback|anthropic-beta|beta/i.test(msg)) return new ApiError(msg, 'fallback-unsupported', status);
+  if (/credit balance|billing/i.test(msg)) return new ApiError('Ton compte API n\'a plus de crédit. Recharge-le sur platform.claude.com, puis réessaie.', 'billing', status);
+  return new ApiError('Requête refusée par l\'API (' + status + ') : ' + (msg || type || 'erreur inconnue'), 'bad', status);
+}
+
+async function callOnce(opt) {
+  const body = {
+    model: MODEL,
+    max_tokens: opt.maxTokens || 6000,
+    stream: true,
+    output_config: { effort: EFFORT },
+    // Le prompt système est stable pendant toute la partie : on le met en cache.
+    system: [{ type: 'text', text: opt.system, cache_control: { type: 'ephemeral' } }],
+    messages: opt.messages
+  };
+  if (opt.schema) body.output_config.format = { type: 'json_schema', schema: opt.schema };
+  const headers = {
+    'content-type': 'application/json',
+    'x-api-key': S.apiKey,
+    'anthropic-version': API_VERSION,
+    'anthropic-dangerous-direct-browser-access': 'true'
+  };
+  // Repli automatique côté serveur si un filtre de sécurité décline la requête.
+  if (S.useFallbacks) { body.fallbacks = 'default'; headers['anthropic-beta'] = FALLBACK_BETA; }
+  DEV.lastReq = { tag: opt.tag, at: Date.now(), body };
+
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 150000);
+  try {
+    let resp;
+    try { resp = await fetch(API_URL, { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal }); }
+    catch (e) {
+      throw new ApiError(ctl.signal.aborted ? 'Le narrateur met trop de temps à répondre.' : 'Impossible de joindre l\'API Claude. Vérifie ta connexion Internet.', 'network');
+    }
+    if (!resp.ok) {
+      let er = null;
+      try { const j = await resp.json(); er = j && j.error; } catch (e) {}
+      throw mapApiError(resp.status, er);
+    }
+    const acc = makeAccumulator(opt.onText), st = { buf: '' };
+    try {
+      if (resp.body && typeof resp.body.getReader === 'function' && typeof TextDecoder !== 'undefined') {
+        const reader = resp.body.getReader(), dec = new TextDecoder();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          feedSSE(acc, st, dec.decode(value, { stream: true }));
+        }
+        feedSSE(acc, st, '\n\n');
+      } else {
+        feedSSE(acc, st, (await resp.text()) + '\n\n');
+      }
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      throw new ApiError(ctl.signal.aborted ? 'Le narrateur met trop de temps à répondre.' : 'La connexion a été coupée pendant la réponse.', 'network');
+    }
+    const u = acc.usage;
+    for (const t of [DEV.total, G && G.usage]) if (t) { t.in += u.in; t.out += u.out; t.cr += u.cr; t.cw += u.cw; t.calls = (t.calls || 0) + 1; }
+    const text = acc.text();
+    DEV.lastRes = { tag: opt.tag, stop: acc.stop, model: acc.model, usage: u, text };
+    if (acc.stop === 'refusal') throw new ApiError('Le narrateur a décliné cette demande.', 'refusal');
+    if (!opt.schema) return { text, usage: u };
+    let data = null;
+    try { data = JSON.parse(text); }
+    catch (e) {
+      const a = text.indexOf('{'), b = text.lastIndexOf('}');
+      if (a >= 0 && b > a) { try { data = JSON.parse(text.slice(a, b + 1)); } catch (e2) {} }
+    }
+    if (!data || typeof data !== 'object') {
+      throw new ApiError(acc.stop === 'max_tokens' ? 'La réponse du narrateur a été tronquée.' : 'Réponse illisible du narrateur.', 'server');
+    }
+    return { data, text, usage: u };
+  } finally { clearTimeout(timer); }
+}
+
+async function callClaude(opt) {
+  if (!S.apiKey) throw new ApiError('Aucune clé API enregistrée.', 'nokey');
+  let last;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try { return await callOnce(opt); }
+    catch (e) {
+      last = e;
+      if (e.kind === 'fallback-unsupported' && S.useFallbacks) { S.useFallbacks = false; saveSettings(); attempt--; continue; }
+      const retry = e.kind === 'network' || e.kind === 'overloaded' || e.kind === 'rate' || e.kind === 'server';
+      if (!retry || attempt === 2) throw e;
+      await sleep(1300 * (attempt + 1) * (attempt + 1));
+    }
+  }
+  throw last;
+}
+
+// ---------------------------------------------------------------- schémas de sortie structurée
+const T_STR = { type: 'string' }, T_INT = { type: 'integer' }, T_BOOL = { type: 'boolean' };
+const sEnum = values => ({ type: 'string', enum: values });
+const sObj = props => ({ type: 'object', additionalProperties: false, required: Object.keys(props), properties: props });
+const sArr = items => ({ type: 'array', items });
+
+const TURN_SCHEMA = sObj({
+  needs_roll: T_BOOL,
+  roll: { anyOf: [{ type: 'null' }, sObj({ stat: sEnum(STATS), dc: T_INT, reason: T_STR, mana_cost: T_INT, advantage: sEnum(['normal', 'avantage', 'desavantage']) })] },
+  narrative: T_STR,
+  hp_change: T_INT, mana_change: T_INT, gold_change: T_INT, xp_gain: T_INT,
+  items_add: sArr(sObj({ name: T_STR, description: T_STR, type: sEnum(ITEM_TYPES), qty: T_INT, bonus_stat: sEnum(STATS.concat(['AUCUN'])), bonus_value: T_INT, value: T_INT })),
+  items_remove: sArr(sObj({ name: T_STR, qty: T_INT })),
+  spells_add: sArr(sObj({ name: T_STR, description: T_STR, mana_cost: T_INT })),
+  statuses_add: sArr(T_STR), statuses_remove: sArr(T_STR),
+  quests: sArr(sObj({ title: T_STR, status: sEnum(['active', 'terminee', 'echouee']), note: T_STR })),
+  location: T_STR, time_of_day: T_STR,
+  rest: sEnum(['aucun', 'court', 'long']),
+  mood: sEnum(MOODS),
+  choices: sArr(T_STR),
+  ending: sEnum(['aucune', 'mort', 'fin'])
+});
+const SPRITE_SCHEMA = sObj({ palette: sArr(sObj({ key: T_STR, hex: T_STR })), rows: sArr(T_STR) });
+
+// ---------------------------------------------------------------- prompts
+function sysPrompt() {
+  const H = G.hero;
+  return `Tu es le Maître du Jeu de « Vingt Faces », un jeu de rôle textuel en solo inspiré de Donjons & Dragons, où tout est possible. Le joueur écrit librement ce que son personnage tente ; tu arbitres avec équité, puis tu racontes. Un programme tient les comptes (points de vie, mana, or, inventaire) et lance les dés : toi, tu décides de ce qui se passe dans la fiction et tu le signales au programme par les champs de ta réponse JSON.
+
+# Le monde
+${G.world.name}. ${G.world.pitch}
+
+# Le héros
+${H.name}, ${H.archName}.${H.concept ? ' Concept : ' + H.concept : ''}
+Caractéristiques maîtrisées : ${H.prof.map(s => STAT_NAMES[s]).join(' et ')}.
+
+# Langue
+Tout ce que lit le joueur (narrative, reason, choices, noms et descriptions d'objets et de sorts, statuts, quêtes, lieux) est écrit en : ${G.lang}. Les valeurs d'énumération du schéma restent telles quelles.
+
+# Déroulement d'un tour
+Chaque message du joueur contient :
+- [ÉTAT] : la vérité chiffrée du jeu, à jour. Fie-toi à elle plutôt qu'à ta mémoire pour l'inventaire, les PV, le mana, l'or et les sorts connus.
+- [ACTION] : ce que le joueur tente, en texte libre.
+- parfois [JET] : le résultat d'un dé que le programme vient de lancer pour cette action.
+- parfois [NOTES] : des événements survenus hors récit (équipement changé, niveau gagné…) à intégrer naturellement.
+
+Tu réponds de l'une de ces deux façons :
+1. Demander un jet (needs_roll = true) quand l'issue est incertaine et que réussir ou échouer change vraiment la suite : combat, acrobatie, discrétion, persuasion risquée, magie, effort physique, ramasser quelque chose de lourd, fixé, gardé ou dangereux… Remplis « roll », écris dans « narrative » une ou deux phrases de mise en tension qui s'arrêtent juste avant l'issue, et laisse tout le reste neutre (0, listes vides, rest « aucun », ending « aucune », location et time_of_day inchangés).
+2. Raconter directement (needs_roll = false, roll = null) quand l'action est banale, sans risque, ou relève de la simple conversation ou de l'observation.
+
+Quand [JET] est présent, le dé est déjà lancé : needs_roll = false, roll = null, et tu racontes l'issue en respectant strictement le verdict.
+- RÉUSSITE CRITIQUE : succès éclatant, avec un bonus inattendu.
+- RÉUSSITE : l'action réussit comme voulu.
+- ÉCHEC DE PEU : c'est raté, mais avec un petit quelque chose (progrès partiel, ou réussite avec un coût).
+- ÉCHEC : l'action rate et la situation se complique.
+- ÉCHEC CRITIQUE : désastre mémorable, parfois drôle, toujours avec des conséquences.
+Un seul jet par action : ne demande jamais un second jet pour la même action, et n'invente jamais toi-même un résultat de dé.
+
+# Tout est possible
+Ne dis jamais qu'une action est impossible ou interdite par le jeu. Si le joueur tente quelque chose d'absurde, de génial ou de suicidaire, fixe une difficulté honnête et laisse le dé et les conséquences parler. Il peut aller n'importe où, parler à n'importe qui, ramasser n'importe quoi, changer de but en cours de route : invente lieux, personnages et objets au besoin, en restant cohérent avec ce qui est déjà établi. Le monde réagit, se souvient, et ses conséquences persistent. Les « choices » ne sont que des suggestions, jamais des rails.
+
+# Régler un jet
+stat : la caractéristique qui correspond à la façon dont le joueur s'y prend (FOR ${STAT_HINT.FOR} · DEX ${STAT_HINT.DEX} · CON ${STAT_HINT.CON} · INT ${STAT_HINT.INT} · SAG ${STAT_HINT.SAG} · CHA ${STAT_HINT.CHA}).
+dc : 5 très facile · 8 facile · 11 moyen · 14 corsé · 17 difficile · 20 très difficile · 24 héroïque · 28 légendaire · 32 quasi impossible. Le programme ajoute lui-même au d20 le modificateur de caractéristique, la maîtrise et les bonus d'équipement, puis ajuste selon le mode de difficulté : n'en tiens pas compte dans dc. Un 20 naturel réussit toujours, un 1 naturel échoue toujours.
+advantage : « avantage » si l'approche est maligne, bien préparée ou servie par le bon outil ; « desavantage » si les circonstances sont franchement contraires ; sinon « normal ».
+reason : une courte phrase qui dit au joueur ce qui est en jeu.
+
+# Magie
+La magie existe pour tous, mais elle coûte et elle a des limites.
+- mana_cost (dans roll) : tour de passe-passe 1 · sort mineur 2-3 · modéré 4-6 · puissant 7-10 · majeur 12 et plus. Le programme prélève ce mana au moment du jet, que le sort réussisse ou non. Indique toujours le vrai coût, même s'il dépasse le mana du héros : le programme lui proposera alors de payer la différence en points de vie (surcharge).
+- Un sort connu (liste « sorts_connus » de [ÉTAT]) coûte son prix indiqué et se lance à difficulté normale. Une magie improvisée coûte 2 de plus et se lance avec un dc augmenté de 3.
+- La puissance accessible suit le niveau du héros : au niveau 1, pas de résurrection, de téléportation lointaine ni de boule de feu dévastatrice sans un dc de 24 ou plus et un coût majeur.
+- Presque toute vraie magie demande un jet. Un échec critique déclenche un contrecoup de magie sauvage.
+- Le mana ne revient pas tout seul : seulement par le repos, des potions ou des lieux de pouvoir. N'utilise mana_change que pour ces gains, ou pour un coût qui n'est pas passé par un jet.
+- Le héros apprend un sort (spells_add) quand la fiction le justifie : grimoire étudié, maître, révélation, ou magie improvisée réussie de façon critique.
+
+# Inventaire
+Tout ce que le héros ramasse, achète, reçoit, vole ou fabrique entre dans items_add — une épée comme un caillou, une chaise, une dent de monstre ou une odeur mise en bocal. Si l'objet est lourd, fixé, gardé ou dangereux, c'est un jet.
+- name : court (1 à 4 mots), sans article ; réutilise exactement le nom déjà présent dans [ÉTAT] pour un objet déjà possédé.
+- description : une phrase concrète et visuelle (forme, matière, couleurs) — elle sert aussi à dessiner l'icône de l'objet.
+- bonus_stat / bonus_value : seulement pour le vrai équipement (arme, armure, accessoire), de +1 à +3 selon la qualité ; sinon « AUCUN » et 0.
+- value : valeur marchande en pièces.
+Ce qui est consommé, donné, vendu, perdu ou brisé sort par items_remove, avec le nom exact figurant dans [ÉTAT]. L'argent passe uniquement par gold_change, jamais par un objet. Si le joueur veut utiliser un objet qu'il n'a pas, la fiction le lui fait sentir.
+
+# Santé, progression, repos
+- hp_change : négatif pour une blessure, positif pour un soin. Repères pour un héros débutant (10 à 20 PV) : égratignure 1-2, coup sérieux 3-6, blessure grave 7-10. Le programme gère la mort : si les PV tombent à 0, il offre un jet de la dernière chance.
+- xp_gain : 5-15 pour une réussite notable, 20-40 pour un obstacle surmonté, 50-100 pour un grand accomplissement. Rien pour les actions banales.
+- gold_change : repères de prix — repas 1, nuit à l'auberge 3, arme simple 15-30, objet rare 100 et plus.
+- rest : « court » (une pause d'une heure à l'abri : le programme rend un peu de PV et de mana) ou « long » (une vraie nuit en sécurité : tout est restauré). Ne double pas ce soin dans hp_change.
+- statuses_add / statuses_remove : états durables en un ou deux mots (Empoisonné, Béni, Recherché…).
+- quests : crée une entrée quand un objectif apparaît, puis mets-la à jour (même title) quand elle avance, se termine ou échoue.
+- location et time_of_day : toujours renseignés avec le lieu et le moment actuels (quelques mots).
+- mood : l'ambiance de la scène.
+- choices : 3 ou 4 pistes brèves (8 mots au plus), variées, dont une audacieuse ou inattendue. Vide quand tu demandes un jet.
+- ending : « mort » seulement si la fiction rend la mort certaine et définitive ; « fin » si l'histoire atteint une vraie conclusion ; sinon « aucune ».
+
+# Style
+Deuxième personne du singulier, au présent. Une prose vive et sensorielle, des personnages qui ont une voix et des envies. En général 60 à 140 mots, davantage pour les grands moments. Pas de listes, pas de chiffres ni de mécanique dans le récit (le programme les affiche). Termine sur une ouverture qui donne envie d'agir, sans demander systématiquement « Que fais-tu ? ». Mise en forme : seulement *italique* et **gras**, avec parcimonie. Reste dans un registre tout public averti : tension, danger et humour noir sont bienvenus, pas de contenu sexuel explicite.`;
+}
+
+function introText() {
+  const a = archOf(G.hero.arch);
+  return `[DÉBUT DE L'AVENTURE]
+Ouvre l'histoire : plante le décor en quelques phrases fortes, place le héros dans une situation qui appelle une décision, et laisse entrevoir un mystère ou un danger. needs_roll = false.
+Donne au héros, de façon cohérente avec son concept et le monde :
+- son équipement de départ par items_add : 4 à 6 objets, dont une arme ou un outil principal (avec un bonus de +1) et un objet singulier, personnel ou intrigant ;
+- ${a.spells > 0 ? a.spells + ' sort(s) de départ par spells_add (coût de 1 à 4 mana chacun)' : 'aucun sort de départ (spells_add vide)'} ;
+- un peu d'argent par gold_change (entre 8 et 40) ;
+- une première accroche par quests ;
+- location, time_of_day, mood et 3 ou 4 choices.`;
+}
+
+const SPRITE_SYSTEM = `Tu es un artiste de pixel art pour un jeu de rôle. On te donne un sujet ; tu dessines son icône en 16×16 pixels.
+
+Format de réponse :
+- palette : de 4 à 9 couleurs, chacune avec une clé d'un seul caractère (lettre minuscule) et une couleur hexadécimale #RRGGBB.
+- rows : exactement 16 chaînes de exactement 16 caractères. Chaque caractère est une clé de la palette, ou « . » pour un pixel transparent.
+
+Pour que l'icône soit belle et lisible en tout petit :
+- une silhouette claire et reconnaissable au premier coup d'œil, centrée, qui occupe environ 12 à 14 pixels dans sa plus grande dimension ;
+- un contour sombre d'un pixel autour de la forme (une couleur très foncée de la palette, pas du noir pur) ;
+- 2 ou 3 teintes par matière : ombre, teinte de base, reflet ; lumière venant d'en haut à gauche ;
+- le fond reste transparent ; pas de texte, pas de cadre.
+Les objets longs (épée, bâton, clé) se dessinent en diagonale. Vérifie que chaque ligne fait bien 16 caractères.`;
+
+const SUMMARY_SYSTEM = `Tu es l'archiviste d'une partie de jeu de rôle. On te donne la chronique existante (peut-être vide) et la transcription des tours les plus anciens. Réécris une chronique unique et à jour qui permettra au Maître du Jeu de garder la cohérence de l'histoire sans relire ces tours.
+Conserve : les lieux visités et ce qui s'y trouve, les personnages rencontrés (nom, rôle, attitude envers le héros), les promesses, dettes, ennemis et alliances, les mystères ouverts, les décisions marquantes du héros et leurs conséquences durables. Laisse de côté l'inventaire et les chiffres (le programme les tient) et les détails sans suite.
+Écris en prose dense, au passé, 250 mots au maximum, dans la langue de la transcription. Réponds uniquement avec la chronique.`;
+
+// ---------------------------------------------------------------- sprites générés par l'IA
+const SPRITE_SIZE = 16;
+const FALLBACK_SPRITE = {
+  p: { k: '#2a1d14', a: '#b07a3c', b: '#7d5326', c: '#e0b66e', d: '#d9c9a3' },
+  r: ['................', '......kkkk......', '.....kddddk.....', '......kbbk......', '.....kkaakk.....', '....kaacaaak....', '...kaacaaaaak...', '..kaacaaaaaaak..',
+    '..kaaaaaaaaabk..', '..kaaaaaaaaabk..', '..kaaaaaaaabbk..', '..kaaaaaaabbbk..', '...kaaaabbbbk...', '....kkkkkkkk....', '................', '................']
+};
+function normalizeSprite(d) {
+  const p = {};
+  for (const c of (d && d.palette) || []) {
+    const k = String(c && c.key || '').trim().charAt(0);
+    let h = String(c && c.hex || '').trim().replace(/^#?/, '#');
+    if (/^#[0-9a-f]{3}$/i.test(h)) h = '#' + h.slice(1).split('').map(x => x + x).join('');
+    if (k && k !== '.' && k !== ' ' && /^#[0-9a-f]{6}$/i.test(h)) p[k] = h.toLowerCase();
+  }
+  let rows = ((d && d.rows) || []).map(r => String(r == null ? '' : r)).filter(r => r.length > 0);
+  if (rows.length > SPRITE_SIZE) rows = rows.slice(0, SPRITE_SIZE);
+  const padTop = Math.floor((SPRITE_SIZE - rows.length) / 2);
+  const out = [];
+  for (let y = 0; y < SPRITE_SIZE; y++) {
+    const src = rows[y - padTop] || '';
+    let line = '';
+    for (let x = 0; x < SPRITE_SIZE; x++) { const ch = src[x]; line += (ch && p[ch]) ? ch : '.'; }
+    out.push(line);
+  }
+  const filled = out.join('').replace(/\./g, '').length;
+  if (Object.keys(p).length < 2 || filled < 14) throw new Error('sprite vide');
+  return { p, r: out };
+}
+const spriteURLCache = new Map();
+function spriteURL(sp) {
+  const key = sp.r.join('') + JSON.stringify(sp.p);
+  let url = spriteURLCache.get(key);
+  if (url) return url;
+  const scale = 6, c = document.createElement('canvas');
+  c.width = c.height = SPRITE_SIZE * scale;
+  const g = c.getContext('2d');
+  for (let y = 0; y < SPRITE_SIZE; y++) for (let x = 0; x < SPRITE_SIZE; x++) {
+    const col = sp.p[sp.r[y][x]];
+    if (col) { g.fillStyle = col; g.fillRect(x * scale, y * scale, scale, scale); }
+  }
+  url = c.toDataURL('image/png');
+  spriteURLCache.set(key, url);
+  return url;
+}
+// Élément d'affichage d'un sprite (image, attente animée, ou sac de secours).
+function spriteEl(kind, o, size) {
+  const st = 'width:' + size + 'px;height:' + size + 'px';
+  const ref = kind + ':' + (o && o.id || '');
+  if (o && o.sprite) return el('img', { class: 'spr', src: spriteURL(o.sprite), style: st, alt: '', 'data-sp': ref, 'data-sz': size });
+  if (o && o.ss === 'pending') return el('div', { class: 'spr pending', style: st, 'data-sp': ref, 'data-sz': size });
+  return el('img', { class: 'spr', src: spriteURL(FALLBACK_SPRITE), style: st + ';opacity:.8', alt: '', 'data-sp': ref, 'data-sz': size });
+}
+function spriteTarget(kind, id) {
+  if (!G) return null;
+  if (kind === 'portrait') return G.hero;
+  if (kind === 'objet') return G.items.find(i => i.id === id) || null;
+  if (kind === 'sort') return G.spells.find(s => s.id === id) || null;
+  return null;
+}
+function refreshSprite(kind, id) {
+  const o = spriteTarget(kind, id);
+  $$('[data-sp="' + kind + ':' + id + '"]').forEach(n => n.replaceWith(spriteEl(kind, o, int(n.getAttribute('data-sz'), 48))));
+}
+const SpriteQ = {
+  q: [], active: 0, max: 2,
+  add(job) { this.q.push(job); this.pump(); },
+  pump() {
+    while (this.active < this.max && this.q.length) {
+      const job = this.q.shift(); this.active++;
+      job().catch(() => {}).then(() => { this.active--; this.pump(); });
+    }
+  }
+};
+async function genSprite(kind, o) {
+  const what = kind === 'portrait' ? 'Portrait en buste du héros, de face ou de trois quarts : visage et épaules, expression lisible.'
+    : kind === 'sort' ? 'Icône de sort : un symbole magique évocateur de son effet (flamme, éclair, œil, rune, main lumineuse…).'
+    : 'Icône d\'objet d\'inventaire.';
+  const user = `${what}\nNom : ${o.name}\nDescription : ${kind === 'portrait' ? (o.archName + '. ' + (o.concept || '')) : (o.desc || '')}` +
+    (kind === 'objet' ? `\nCatégorie : ${o.type}` : '') + `\nUnivers : ${G.world.name}`;
+  const res = await callClaude({ system: SPRITE_SYSTEM, messages: [{ role: 'user', content: user }], schema: SPRITE_SCHEMA, maxTokens: 3000, tag: 'sprite' });
+  return normalizeSprite(res.data);
+}
+function queueSprite(kind, id) {
+  const o = spriteTarget(kind, id);
+  if (!o) return;
+  if (!S.apiKey) { o.ss = 'fail'; return; }
+  o.ss = 'pending';
+  const gid = G.id;
+  SpriteQ.add(async () => {
+    let cur = G && G.id === gid ? spriteTarget(kind, id) : null;
+    if (!cur) return;
+    let sp = null;
+    try { sp = await genSprite(kind, cur); } catch (e) { sp = null; }
+    cur = G && G.id === gid ? spriteTarget(kind, id) : null;   // l'état a pu être rechargé entre-temps
+    if (!cur) return;
+    if (sp) { cur.sprite = sp; cur.ss = 'ok'; } else cur.ss = 'fail';
+    refreshSprite(kind, id);
+    autosave();
+  });
+}
+function requeueSprites() {
+  if (!G || !S.apiKey) return;
+  if (!G.hero.sprite && G.hero.ss !== 'fail') queueSprite('portrait', 'hero');
+  G.items.forEach(i => { if (!i.sprite && i.ss !== 'fail') queueSprite('objet', i.id); });
+  G.spells.forEach(s => { if (!s.sprite && s.ss !== 'fail') queueSprite('sort', s.id); });
+}
+
+// ---------------------------------------------------------------- état de la partie & règles
+let G = null;            // partie en cours
+let prevSnap = null;     // état (JSON) avant le dernier tour, pour « revenir en arrière »
+let busy = false;
+let pending = null;      // tour en cours de résolution
+
+const mod = v => Math.floor((v - 10) / 2);
+const profBonus = () => 2 + Math.floor((G.hero.level - 1) / 4);
+const xpNeed = lvl => 100 * lvl;
+function archOf(id) { return ARCHS.find(a => a.id === id) || ARCHS[0]; }
+function calcMax(H) {
+  const a = archOf(H.arch), con = mod(H.stats.CON);
+  const mental = Math.max(mod(H.stats.INT), mod(H.stats.SAG), mod(H.stats.CHA));
+  return {
+    hpMax: Math.max(4, a.hp + con * 2 + (H.level - 1) * (3 + Math.floor(a.hp / 4) + Math.max(0, con))),
+    manaMax: Math.max(2, a.mana + Math.max(0, mental) * 2 + (H.level - 1) * (1 + Math.floor(a.mana / 4)))
+  };
+}
+function recalcMax(fullHeal) {
+  const H = G.hero, m = calcMax(H);
+  H.hp = clamp(H.hp + Math.max(0, m.hpMax - H.hpMax), 0, m.hpMax);
+  H.mana = clamp(H.mana + Math.max(0, m.manaMax - H.manaMax), 0, m.manaMax);
+  H.hpMax = m.hpMax; H.manaMax = m.manaMax;
+  if (fullHeal) { H.hp = H.hpMax; H.mana = H.manaMax; }
+}
+function equipBonus(stat) {
+  let b = 0;
+  for (const i of G.items) if (i.eq && i.bonusStat === stat) b += i.bonusVal;
+  return Math.min(5, b);
+}
+function rollParts(stat, plain) {
+  const H = G.hero, parts = [{ label: STAT_NAMES[stat], v: mod(H.stats[stat]) }];
+  if (H.prof.includes(stat)) parts.push({ label: 'Maîtrise', v: profBonus() });
+  const eb = plain ? 0 : equipBonus(stat);
+  if (eb) parts.push({ label: 'Équipement', v: eb });
+  return parts;
+}
+function dcLabel(dc) {
+  return dc <= 6 ? 'très facile' : dc <= 9 ? 'facile' : dc <= 12 ? 'moyen' : dc <= 15 ? 'corsé' : dc <= 18 ? 'difficile'
+    : dc <= 22 ? 'très difficile' : dc <= 26 ? 'héroïque' : dc <= 30 ? 'légendaire' : 'quasi impossible';
+}
+const VERDICT = {
+  crit: { ui: 'Réussite critique !', ai: 'RÉUSSITE CRITIQUE' },
+  success: { ui: 'Réussite', ai: 'RÉUSSITE' },
+  near: { ui: 'Échec de peu', ai: 'ÉCHEC DE PEU' },
+  fail: { ui: 'Échec', ai: 'ÉCHEC' },
+  fumble: { ui: 'Échec critique !', ai: 'ÉCHEC CRITIQUE' }
+};
+function note(text) { if (!G) return; G.notes.push(text); if (G.notes.length > 6) G.notes = G.notes.slice(-6); }
+
+function newGameState(C) {
+  const a = archOf(C.arch), w = WORLDS.find(x => x.id === C.world) || WORLDS[0];
+  const H = { id: 'hero', name: C.name.trim() || pick(NAMES), arch: a.id, archName: a.name, concept: cleanText(C.concept, 400), prof: a.prof.slice(),
+    stats: Object.assign({}, C.stats), level: 1, xp: 0, hp: 1, hpMax: 1, mana: 0, manaMax: 0, gold: 0, statPoints: 0, lastStandUsed: false, sprite: null, ss: '' };
+  const m = calcMax(H); H.hpMax = H.hp = m.hpMax; H.manaMax = H.mana = m.manaMax;
+  return {
+    v: 1, id: uid(), created: Date.now(), saved: Date.now(), slot: 0, turn: 0,
+    world: { id: w.id, name: w.id === 'custom' ? 'Monde sur mesure' : w.name, pitch: w.id === 'custom' ? cleanText(C.customWorld, 900) : w.pitch },
+    diff: C.diff, lang: S.narrLang, hero: H,
+    location: '', time: '', mood: 'calme', places: [], statuses: [], items: [], spells: [], quests: [],
+    log: [], hist: [], summary: '', choices: [], notes: [], dead: false, ended: false,
+    usage: { in: 0, out: 0, cr: 0, cw: 0, calls: 0 }
+  };
+}
+// Complète une sauvegarde ancienne ou importée avec les champs manquants.
+function migrate(g) {
+  const d = { turn: 0, location: '', time: '', mood: 'calme', places: [], statuses: [], items: [], spells: [], quests: [], log: [], hist: [], summary: '', choices: [], notes: [], dead: false, ended: false, diff: 'normal', lang: 'Français', slot: 0 };
+  for (const k in d) if (g[k] == null) g[k] = d[k];
+  if (!g.usage) g.usage = { in: 0, out: 0, cr: 0, cw: 0, calls: 0 };
+  if (!g.id) g.id = uid();
+  if (!DIFFS[g.diff]) g.diff = 'normal';
+  const H = g.hero;
+  H.id = 'hero';
+  if (!H.prof) H.prof = archOf(H.arch).prof.slice();
+  if (H.statPoints == null) H.statPoints = 0;
+  g.items.forEach(i => { if (!i.id) i.id = uid(); if (!ITEM_TYPES.includes(i.type)) i.type = 'divers'; if (i.ss === 'pending') i.ss = ''; });
+  g.spells.forEach(s => { if (!s.id) s.id = uid(); if (s.ss === 'pending') s.ss = ''; });
+  if (H.ss === 'pending') H.ss = '';
+  return g;
+}
+
+// ---------------------------------------------------------------- inventaire, sorts, statuts, quêtes
+function findItem(name) {
+  const n = norm(name);
+  if (!n) return null;
+  let it = G.items.find(i => norm(i.name) === n);
+  if (it) return it;
+  const c = G.items.filter(i => { const m = norm(i.name); return m && (m.includes(n) || n.includes(m)); });
+  c.sort((a, b) => Math.abs(norm(a.name).length - n.length) - Math.abs(norm(b.name).length - n.length));
+  return c[0] || null;
+}
+function addItem(a) {
+  const name = cleanText(a && a.name, 60).replace(/[.\s]+$/, '');
+  if (!name) return null;
+  const qty = clamp(int(a.qty, 1) || 1, 1, 999);
+  const ex = G.items.find(i => norm(i.name) === norm(name));
+  if (ex) { ex.qty = clamp(ex.qty + qty, 1, 9999); return { item: ex, qty, isNew: false }; }
+  const type = ITEM_TYPES.includes(a.type) ? a.type : 'divers';
+  const equipable = !!SLOT_OF[type];
+  const bonusStat = equipable && STATS.includes(a.bonus_stat) ? a.bonus_stat : 'AUCUN';
+  const it = { id: uid(), name, desc: cleanText(a.description, 260), type, qty,
+    bonusStat, bonusVal: bonusStat === 'AUCUN' ? 0 : clamp(int(a.bonus_value), 0, 5),
+    value: clamp(int(a.value), 0, 999999), eq: false, sprite: null, ss: '' };
+  if (it.bonusVal === 0) it.bonusStat = 'AUCUN';
+  G.items.push(it);
+  queueSprite('objet', it.id);
+  return { item: it, qty, isNew: true };
+}
+function removeItem(name, qty) {
+  const it = findItem(name);
+  if (!it) return null;
+  let q = int(qty);
+  if (q <= 0 || q > it.qty) q = it.qty;
+  it.qty -= q;
+  if (it.qty <= 0) G.items = G.items.filter(i => i !== it);
+  return { item: it, qty: q };
+}
+function toggleEquip(it) {
+  const slot = SLOT_OF[it.type];
+  if (!slot) return;
+  if (it.eq) { it.eq = false; note('Le héros retire : ' + it.name + '.'); }
+  else {
+    const same = G.items.filter(i => i.eq && SLOT_OF[i.type] === slot);
+    if (same.length >= SLOT_MAX[slot]) same[0].eq = false;
+    it.eq = true; note('Le héros s\'équipe de : ' + it.name + '.');
+  }
+  Snd.tap(); autosave(); renderAll();
+}
+function addSpell(a) {
+  const name = cleanText(a && a.name, 60);
+  if (!name || G.spells.some(s => norm(s.name) === norm(name))) return null;
+  const sp = { id: uid(), name, desc: cleanText(a.description, 260), cost: clamp(int(a.mana_cost, 2), 0, 30), sprite: null, ss: '' };
+  G.spells.push(sp);
+  queueSprite('sort', sp.id);
+  return sp;
+}
+function addStatus(s) {
+  s = cleanText(s, 40);
+  if (!s || G.statuses.some(x => norm(x) === norm(s))) return false;
+  G.statuses.push(s); if (G.statuses.length > 12) G.statuses.shift();
+  return true;
+}
+function removeStatus(s) {
+  const n = norm(s); if (!n) return null;
+  const i = G.statuses.findIndex(x => { const m = norm(x); return m === n || m.includes(n) || n.includes(m); });
+  return i >= 0 ? G.statuses.splice(i, 1)[0] : null;
+}
+
+// ---------------------------------------------------------------- ce que l'IA voit
+function stateForAI() {
+  const H = G.hero, mods = {};
+  STATS.forEach(s => { mods[s] = fmtModA(mod(H.stats[s])); });
+  const itemInfo = i => {
+    const o = { nom: i.name, type: i.type };
+    if (i.qty > 1) o.qte = i.qty;
+    if (i.bonusVal) o.bonus = '+' + i.bonusVal + ' ' + i.bonusStat;
+    return o;
+  };
+  return {
+    tour: G.turn, lieu: G.location || 'inconnu', moment: G.time || 'inconnu', mode: DIFFS[G.diff].name,
+    heros: {
+      niveau: H.level, pv: H.hp + '/' + H.hpMax,
+      mana: S.god ? 'illimité' : H.mana + '/' + H.manaMax,
+      or: S.god ? 'illimité' : H.gold,
+      modificateurs: mods, statuts: G.statuses
+    },
+    equipe: G.items.filter(i => i.eq).map(itemInfo),
+    inventaire: G.items.filter(i => !i.eq).map(itemInfo),
+    sorts_connus: G.spells.map(s => s.name + ' (' + s.cost + ' mana) : ' + s.desc),
+    quetes_actives: G.quests.filter(q => q.status === 'active').map(q => q.title + (q.note ? ' — ' + q.note : ''))
+  };
+}
+function rollLine(r) {
+  let s = 'Épreuve de ' + STAT_NAMES[r.stat] + ', difficulté ' + r.dc + '. d20 = ' + r.nat;
+  if (r.adv !== 'normal') s += ' (' + r.adv + ' : dés ' + r.d1 + ' et ' + r.d2 + ')';
+  s += ', modificateurs ' + fmtModA(r.mod) + ', total ' + r.total + '. VERDICT : ' + VERDICT[r.verdict].ai;
+  if (r.verdict === 'success' || r.verdict === 'fail' || r.verdict === 'near') s += ' (marge ' + fmtModA(r.total - r.dc) + ')';
+  s += '.';
+  if (r.mana) s += ' Mana dépensé : ' + r.mana + '.';
+  if (r.hpPaid) s += ' Surcharge magique : faute de mana, le héros a sacrifié ' + r.hpPaid + ' PV (déjà déduits par le programme).';
+  return s;
+}
+function userContent(p) {
+  let s = '';
+  if (p.notes && p.notes.length) s += '[NOTES]\n' + p.notes.map(n => '- ' + n).join('\n') + '\n\n';
+  s += p.intro ? introText() : '[ACTION]\n' + p.action;
+  if (p.roll) {
+    s += '\n\n[JET]\n' + rollLine(p.roll);
+    if (p.setup) s += '\nTu as déjà raconté la mise en tension (« ' + p.setup + ' ») : enchaîne directement sur l\'issue.';
+  }
+  return s;
+}
+function buildMessages(p) {
+  const msgs = G.hist.map(m => ({ role: m.role, content: [{ type: 'text', text: m.content }] }));
+  const chron = G.summary ? '[CHRONIQUE — résumé des événements passés]\n' + G.summary + '\n[FIN DE LA CHRONIQUE]\n\n' : '';
+  if (chron && msgs.length) msgs[0].content[0].text = chron + msgs[0].content[0].text;
+  // Tout l'historique est stable d'un tour à l'autre : on place le point de cache sur son dernier message.
+  if (msgs.length) msgs[msgs.length - 1].content[0].cache_control = { type: 'ephemeral' };
+  const last = (chron && !msgs.length ? chron : '') + '[ÉTAT]\n' + JSON.stringify(stateForAI()) + '\n\n' + userContent(p);
+  msgs.push({ role: 'user', content: [{ type: 'text', text: last }] });
+  return msgs;
+}
+
+// ---------------------------------------------------------------- le dé
+const D20_SVG = '<polygon class="o" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5"/><polygon class="i" points="50,22 78,68 22,68"/>' +
+  '<path class="l" d="M50,3 L50,22 M91,26.5 L50,22 M9,26.5 L50,22 M91,26.5 L78,68 M9,26.5 L22,68 M91,73.5 L78,68 M9,73.5 L22,68 M50,97 L78,68 M50,97 L22,68"/>';
+function dieSVG(n, cls) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 100 100'); s.setAttribute('class', cls || 'die d20');
+  s.innerHTML = D20_SVG + '<text class="n" x="50" y="58">' + n + '</text>';
+  return s;
+}
+const Dice = {
+  // spec : {stat, dc, reason, mana, adv, title, noCancel, plain} → Promise<résultat | null si le joueur renonce>
+  ask(spec) {
+    return new Promise(resolve => {
+      const root = $('#dice'), H = G.hero;
+      const parts = rollParts(spec.stat, spec.plain);
+      const total = parts.reduce((a, p) => a + p.v, 0);
+      const two = spec.adv !== 'normal';
+      const mana = S.god ? 0 : Math.max(0, spec.mana || 0);
+      const deficit = Math.max(0, mana - H.mana), hpCost = deficit * 2;
+      const fatal = hpCost > 0 && hpCost >= H.hp;
+      const dice = [dieSVG('?', 'die d20 idle')]; if (two) dice.push(dieSVG('?', 'die d20 idle'));
+      const hint = el('div', { class: 'd-hint', text: fatal ? '' : 'Touche le dé pour lancer' });
+      const res = el('div', { class: 'd-res' }), verdictEl = el('div', { class: 'd-verdict' });
+      const cancel = spec.noCancel ? null : el('button', { class: 'd-cancel', text: 'Renoncer à cette action', onclick: () => finish(null) });
+      const dcNote = spec.baseDc != null && spec.baseDc !== spec.dc ? ' · mode ' + DIFFS[G.diff].name : '';
+      const card = el('div', { class: 'd-card' },
+        el('div', { class: 'd-kick', text: spec.title ? 'Dernier recours' : 'Épreuve' }),
+        el('div', { class: 'd-title', text: spec.title || STAT_NAMES[spec.stat] }),
+        spec.reason ? el('div', { class: 'd-reason', text: spec.reason }) : null,
+        el('div', { class: 'd-dc' }, el('span', { text: 'Difficulté' }), el('b', { text: spec.dc }), el('span', { text: dcLabel(spec.dc) + dcNote })),
+        el('div', { class: 'd-mods' }, parts.map((p, i) => [i ? ' · ' : '', p.label + ' ', el('b', { text: fmtMod(p.v) })]), parts.length > 1 ? [' = ', el('b', { text: fmtMod(total) })] : null),
+        two ? el('div', { class: 'd-mods', text: spec.adv === 'avantage' ? '▲ Avantage : deux dés, on garde le meilleur' : '▼ Désavantage : deux dés, on garde le pire' }) : null,
+        (spec.mana > 0) ? el('div', { class: 'd-mana', text: '✨ Coût : ' + spec.mana + ' mana' + (S.god ? ' (gratuit en mode dieu)' : ' (tu en as ' + H.mana + ')') }) : null,
+        hpCost > 0 ? el('div', { class: 'd-warn', text: fatal ? '⚠ Il te manque ' + deficit + ' mana. La surcharge te coûterait ' + hpCost + ' PV : elle te tuerait.' : '⚠ Surcharge : il te manque ' + deficit + ' mana. Lancer quand même te coûtera ' + hpCost + ' PV.' }) : null,
+        el('div', { class: 'd-dice' + (two ? ' two' : '') }, dice),
+        res, verdictEl, hint, cancel
+      );
+      root.innerHTML = ''; root.append(card); root.classList.add('on');
+      let state = 'idle', result = null, timer = null;
+      const finish = r => { if (state === 'done') return; state = 'done'; clearTimeout(timer); root.classList.remove('on'); root.innerHTML = ''; resolve(r); };
+      const go = () => {
+        if (state !== 'idle' || fatal) return;
+        state = 'rolling'; Snd.init(); Snd.dice();
+        if (cancel) cancel.style.visibility = 'hidden';
+        hint.textContent = '';
+        dice.forEach(d => d.setAttribute('class', 'die d20 rolling'));
+        const forced = S.god && S.forceDie >= 1 && S.forceDie <= 20 ? S.forceDie : 0;
+        const d1 = forced || d20(), d2 = two ? (forced || d20()) : 0;
+        const nat = !two ? d1 : spec.adv === 'avantage' ? Math.max(d1, d2) : Math.min(d1, d2);
+        const spin = setInterval(() => dice.forEach(d => { d.querySelector('.n').textContent = Math.floor(Math.random() * 20) + 1; }), 70);
+        setTimeout(() => {
+          clearInterval(spin);
+          const sum = nat + total;
+          const verdict = nat === 20 ? 'crit' : nat === 1 ? 'fumble' : sum >= spec.dc ? 'success' : (spec.dc - sum <= 2 ? 'near' : 'fail');
+          const vals = [d1, d2];
+          let kept = false;
+          dice.forEach((d, i) => {
+            d.querySelector('.n').textContent = vals[i];
+            let cls = 'die d20 land';
+            if (two && (vals[i] !== nat || kept)) cls += ' drop';
+            else { kept = true; if (verdict === 'crit') cls += ' r-crit'; if (verdict === 'fumble') cls += ' r-fumble'; }
+            d.setAttribute('class', cls);
+          });
+          res.textContent = nat + ' ' + (total >= 0 ? '+' : '−') + ' ' + Math.abs(total) + ' = ' + sum + '  contre  ' + spec.dc;
+          verdictEl.textContent = VERDICT[verdict].ui; verdictEl.className = 'd-verdict v-' + verdict;
+          if (verdict === 'crit') Snd.crit(); else if (verdict === 'success') Snd.good(); else if (verdict === 'fumble') Snd.fumble(); else Snd.bad();
+          // paiement de la magie
+          let hpPaid = 0;
+          if (mana > 0) {
+            const pay = Math.min(H.mana, mana); H.mana -= pay;
+            if (hpCost > 0) { hpPaid = hpCost; H.hp = Math.max(1, H.hp - hpCost); }
+          }
+          result = { stat: spec.stat, dc: spec.dc, reason: spec.reason || '', adv: spec.adv, d1, d2, nat, mod: total, total: sum, verdict,
+            ok: verdict === 'crit' || verdict === 'success', mana: spec.mana > 0 ? spec.mana : 0, hpPaid, title: spec.title || '' };
+          state = 'shown'; hint.textContent = 'Touche pour continuer';
+          updateHUD();
+          timer = setTimeout(() => finish(result), 2200);
+        }, 1000);
+      };
+      dice.forEach(d => d.addEventListener('click', e => { e.stopPropagation(); if (state === 'idle') go(); else if (state === 'shown') finish(result); }));
+      card.addEventListener('click', () => { if (state === 'shown') finish(result); });
+    });
+  }
+};
+
+// ---------------------------------------------------------------- moteur de tour
+async function requestTurn(p) {
+  showThinking(true);
+  let live = null;
+  try {
+    const res = await callClaude({
+      system: sysPrompt(), messages: buildMessages(p), schema: TURN_SCHEMA, maxTokens: 6000, tag: p.intro ? 'intro' : (p.roll ? 'issue' : 'tour'),
+      onText: full => {
+        const t = partialField(full, 'narrative');
+        if (!t) return;
+        showThinking(false);
+        if (!live) live = liveNarr();
+        live.set(t);
+      }
+    });
+    return res.data;
+  } finally { showThinking(false); if (live) live.remove(); }
+}
+
+async function resolveTurn(p) {
+  let o = await requestTurn(p);
+  if (o.needs_roll && o.roll && !p.roll && !p.intro) {
+    const setup = cleanText(o.narrative, 600);
+    if (setup) pushLog({ t: 'narr', text: setup, setup: true });
+    p.setup = setup;
+    const base = clamp(int(o.roll.dc, 11), 2, 40);
+    const spec = {
+      stat: STATS.includes(o.roll.stat) ? o.roll.stat : 'DEX',
+      baseDc: base, dc: clamp(base + DIFFS[G.diff].dc, 2, 40),
+      reason: cleanText(o.roll.reason, 200), mana: clamp(int(o.roll.mana_cost), 0, 60),
+      adv: ['avantage', 'desavantage'].includes(o.roll.advantage) ? o.roll.advantage : 'normal'
+    };
+    const r = await Dice.ask(spec);
+    if (!r) return 'cancel';
+    p.roll = r;
+    pushLog(Object.assign({ t: 'roll' }, r));
+    o = await requestTurn(p);
+  }
+  await applyOutcome(o, p);
+  return 'ok';
+}
+
+async function applyOutcome(o, p) {
+  const H = G.hero, chips = [], fx = [], after = [];
+  const narrative = cleanText(o.narrative, 4000) || '…';
+  pushLog({ t: 'narr', text: narrative, first: !!p.intro });
+
+  // lieu, moment, ambiance
+  const loc = cleanText(o.location, 70), tod = cleanText(o.time_of_day, 40);
+  if (loc && norm(loc) !== norm(G.location)) {
+    G.location = loc;
+    if (!G.places.some(x => norm(x) === norm(loc))) { G.places.push(loc); if (G.places.length > 40) G.places.shift(); }
+    if (!p.intro) chips.push({ k: 'loc', text: '📍 ' + loc });
+  }
+  if (tod) G.time = tod;
+  if (MOODS.includes(o.mood)) G.mood = o.mood;
+
+  // repos
+  if (o.rest === 'long') {
+    H.hp = H.hpMax; H.mana = H.manaMax; H.lastStandUsed = false;
+    chips.push({ k: 'heal', text: '🌙 Repos long : PV et mana restaurés' }); fx.push('repos long (PV et mana restaurés)');
+  } else if (o.rest === 'court') {
+    H.hp = Math.min(H.hpMax, H.hp + Math.ceil(H.hpMax * 0.3)); H.mana = Math.min(H.manaMax, H.mana + Math.ceil(H.manaMax * 0.5));
+    chips.push({ k: 'heal', text: '☕ Repos court : un peu de PV et de mana' }); fx.push('repos court');
+  }
+  // points de vie
+  let dhp = int(o.hp_change);
+  if (dhp < 0) dhp = Math.min(-1, Math.round(dhp * DIFFS[G.diff].dmg));
+  if (dhp) {
+    const before = H.hp;
+    H.hp = clamp(H.hp + dhp, S.god ? 1 : 0, H.hpMax);
+    const real = H.hp - before;
+    if (real) { chips.push({ k: real < 0 ? 'dmg' : 'heal', text: (real > 0 ? '+' : '−') + Math.abs(real) + ' PV' }); fx.push('PV ' + fmtModA(real)); hudPulse(real < 0 ? 'dmg' : 'heal'); }
+  }
+  // mana
+  let dm = int(o.mana_change);
+  if (S.god && dm < 0) dm = 0;
+  if (dm) {
+    const before = H.mana; H.mana = clamp(H.mana + dm, 0, H.manaMax);
+    const real = H.mana - before;
+    if (real) { chips.push({ k: 'mana', text: (real > 0 ? '+' : '−') + Math.abs(real) + ' mana' }); fx.push('mana ' + fmtModA(real)); }
+  }
+  // or
+  let dg = int(o.gold_change);
+  if (S.god && dg < 0) dg = 0;
+  if (dg) {
+    const before = H.gold; H.gold = clamp(H.gold + dg, 0, 99999999);
+    const real = H.gold - before;
+    if (real) { chips.push({ k: 'gold', text: '🪙 ' + (real > 0 ? '+' : '−') + Math.abs(real) }); fx.push('or ' + fmtModA(real)); }
+  }
+  // objets perdus
+  for (const r of (Array.isArray(o.items_remove) ? o.items_remove : []).slice(0, 12)) {
+    const out = removeItem(r && r.name, r && r.qty);
+    if (out) { chips.push({ k: 'lost', text: '− ' + out.item.name + (out.qty > 1 ? ' ×' + out.qty : '') }); fx.push('objet perdu : ' + out.item.name + (out.qty > 1 ? ' x' + out.qty : '')); }
+  }
+  // objets gagnés
+  let gotLoot = false;
+  for (const a of (Array.isArray(o.items_add) ? o.items_add : []).slice(0, 10)) {
+    const got = addItem(a);
+    if (got) { gotLoot = true; after.push({ t: 'loot', id: got.item.id, name: got.item.name, desc: got.item.desc, qty: got.qty }); fx.push('objet obtenu : ' + got.item.name + (got.qty > 1 ? ' x' + got.qty : '')); }
+  }
+  // sorts
+  for (const a of (Array.isArray(o.spells_add) ? o.spells_add : []).slice(0, 5)) {
+    const sp = addSpell(a);
+    if (sp) { gotLoot = true; after.push({ t: 'loot', id: sp.id, kind: 'sort', name: sp.name, desc: sp.desc, cost: sp.cost }); fx.push('sort appris : ' + sp.name); }
+  }
+  // statuts
+  for (const s of (Array.isArray(o.statuses_remove) ? o.statuses_remove : []).slice(0, 6)) {
+    const gone = removeStatus(s);
+    if (gone) { chips.push({ k: 'lost', text: '− ' + gone }); fx.push('statut retiré : ' + gone); }
+  }
+  for (const s of (Array.isArray(o.statuses_add) ? o.statuses_add : []).slice(0, 6)) {
+    if (addStatus(s)) { chips.push({ k: 'st', text: '◈ ' + cleanText(s, 40) }); fx.push('statut : ' + cleanText(s, 40)); }
+  }
+  // quêtes
+  for (const q of (Array.isArray(o.quests) ? o.quests : []).slice(0, 5)) {
+    const title = cleanText(q && q.title, 80); if (!title) continue;
+    const status = q.status === 'terminee' ? 'done' : q.status === 'echouee' ? 'fail' : 'active';
+    const n = norm(title);
+    let ex = G.quests.find(x => norm(x.title) === n) || G.quests.find(x => { const m = norm(x.title); return m.includes(n) || n.includes(m); });
+    if (!ex) { ex = { id: uid(), title, status, note: cleanText(q.note, 200) }; G.quests.push(ex); if (status === 'active') after.push({ t: 'sys', text: '📜 Nouvelle quête : ' + title }); }
+    else {
+      const was = ex.status; ex.status = status; if (q.note) ex.note = cleanText(q.note, 200);
+      if (was !== status && status === 'done') after.push({ t: 'sys', text: '✅ Quête accomplie : ' + ex.title });
+      if (was !== status && status === 'fail') after.push({ t: 'sys', text: '✖ Quête échouée : ' + ex.title });
+    }
+  }
+  // expérience & niveaux
+  const xp = clamp(int(o.xp_gain), 0, 500);
+  if (xp) {
+    H.xp += xp; chips.push({ k: 'xp', text: '+' + xp + ' XP' }); fx.push('XP +' + xp);
+    while (H.xp >= xpNeed(H.level) && H.level < 20) {
+      H.xp -= xpNeed(H.level); H.level++; H.statPoints++;
+      recalcMax(true);
+      after.push({ t: 'sys', big: true, text: '⭐ Niveau ' + H.level + ' ! PV et mana restaurés · +1 point de caractéristique (onglet Héros)' });
+      note('Le héros vient de passer au niveau ' + H.level + '.');
+      Snd.level();
+    }
+  }
+  if (chips.length) pushLog({ t: 'fx', chips });
+  after.forEach(e => pushLog(e));
+  if (gotLoot) Snd.loot();
+
+  // suite
+  G.choices = (Array.isArray(o.choices) ? o.choices : []).map(c => cleanText(c, 90)).filter(Boolean).slice(0, 5);
+  G.turn++;
+  G.hist.push({ role: 'user', content: userContent(p) });
+  G.hist.push({ role: 'assistant', content: narrative + (fx.length ? '\n[EFFETS] ' + fx.join(' ; ') : '') });
+  renderAll();
+
+  // mort, dernière chance, fin
+  if (!S.god && (H.hp <= 0 || o.ending === 'mort')) {
+    let alive = false;
+    if (o.ending !== 'mort' && !H.lastStandUsed) {
+      const r = await Dice.ask({ title: 'Jet de la dernière chance', stat: 'CON', dc: 10, reason: 'Tu vacilles au bord du néant. Un dernier sursaut ?', mana: 0, adv: 'normal', noCancel: true, plain: true });
+      pushLog(Object.assign({ t: 'roll' }, r));
+      if (r.ok) {
+        alive = true; H.hp = 1; H.lastStandUsed = true; addStatus('À l\'agonie');
+        pushLog({ t: 'sys', big: true, text: '❤ Tu t\'accroches à la vie : 1 PV. Il n\'y aura pas de seconde chance avant un vrai repos.' });
+        note('Le héros est tombé à 0 PV mais a survécu de justesse (jet de la dernière chance réussi) : il lui reste 1 PV et il est à l\'agonie. Raconte ce sursaut. Il ne survivra pas une seconde fois avant un repos long.');
+      }
+    }
+    if (!alive) {
+      H.hp = 0; G.dead = true; G.choices = [];
+      pushLog({ t: 'sys', big: true, text: '☠ ' + H.name + ' est mort. Ici s\'achève son histoire.' });
+    }
+  } else if (S.god && o.ending === 'mort') {
+    pushLog({ t: 'sys', text: 'Mode dieu : la mort passe son chemin.' });
+  }
+  if (o.ending === 'fin' && !G.ended && !G.dead) { G.ended = true; pushLog({ t: 'sys', big: true, text: '— FIN — L\'histoire atteint sa conclusion, mais le monde reste ouvert.' }); }
+
+  // mémoire longue : on condense les tours les plus anciens
+  if (G.hist.length >= 36) { try { await summarize(16); } catch (e) {} }
+  autosave();
+  renderAll();
+  if (G.dead) showDeath(); else if (o.ending === 'fin') showEnding();
+}
+
+async function summarize(count) {
+  const old = G.hist.slice(0, count);
+  const transcript = old.map(m => (m.role === 'user' ? 'JOUEUR :\n' : 'RÉCIT :\n') + m.content).join('\n\n');
+  showThinking(true, 'Le narrateur consigne la chronique…');
+  try {
+    const res = await callClaude({
+      system: SUMMARY_SYSTEM, maxTokens: 2500, tag: 'chronique',
+      messages: [{ role: 'user', content: '[CHRONIQUE EXISTANTE]\n' + (G.summary || '(vide)') + '\n\n[TOURS À INTÉGRER]\n' + transcript }]
+    });
+    const s = cleanText(res.text, 3000);
+    if (s.length > 40) { G.summary = s; G.hist.splice(0, count); }
+  } finally { showThinking(false); }
+}
+
+function takeSnap() { try { prevSnap = JSON.stringify(G); store.set('vf_prev', G); } catch (e) {} }
+
+async function act(text) {
+  text = cleanText(text, 1200);
+  if (!text || busy || !G || G.dead) return;
+  if (!S.apiKey) { openKeyModal(); return; }
+  Snd.init();
+  takeSnap();
+  const p = { action: text, roll: null, setup: '', notes: G.notes, logMark: G.log.length };
+  G.notes = [];
+  G.choices = []; renderChoices();
+  pushLog({ t: 'act', text });
+  await runTurn(p);
+}
+async function runTurn(p) {
+  pending = p; setBusy(true);
+  let outcome = 'error';
+  try { outcome = await resolveTurn(p); }
+  catch (e) { showTurnError(e, p); }
+  if (outcome === 'cancel') cancelTurn(p, true);
+  if (outcome !== 'error') pending = null;
+  setBusy(false);
+  renderAll();
+}
+function cancelTurn(p, restoreInput) {
+  pending = null;
+  if (p.intro) return;
+  G.notes = (p.notes || []).concat(G.notes);
+  truncateLog(p.logMark);
+  if (prevSnap) { try { const s = JSON.parse(prevSnap); G.choices = s.choices || []; } catch (e) {} }
+  if (restoreInput) { const inp = $('#inp'); inp.value = p.action; autoGrow(); }
+  renderAll();
+}
+async function startIntro() {
+  if (!S.apiKey) { openKeyModal(() => startIntro()); return; }
+  await runTurn({ intro: true, roll: null, setup: '', notes: [], logMark: 0 });
+}
+function undoTurn() {
+  let snap = prevSnap;
+  if (!snap) { const s = store.get('vf_prev'); if (s && G && s.id === G.id) snap = JSON.stringify(s); }
+  if (!snap) { toast('Aucun tour à annuler.'); return false; }
+  loadState(JSON.parse(snap), true);
+  prevSnap = null;
+  toast('Retour au tour précédent.');
+  return true;
+}
+
+// ---------------------------------------------------------------- toasts & modales
+function toast(msg) {
+  const t = el('div', { class: 'toast', text: msg });
+  $('#toasts').append(t);
+  setTimeout(() => t.remove(), 2700);
+}
+const Modal = {
+  // opt : {title, body, actions:[{label, cls, fn, keep}], wide, noClose, onClose}
+  open(opt) {
+    const wrap = el('div', { class: 'modal' });
+    let closed = false;
+    const close = () => { if (closed) return; closed = true; wrap.remove(); if (opt.onClose) opt.onClose(); };
+    const card = el('div', { class: 'm-card' + (opt.wide ? ' wide' : '') },
+      el('div', { class: 'm-title' }, el('span', { text: opt.title || '' }), opt.noClose ? null : el('button', { class: 'm-x', text: '✕', onclick: close })),
+      opt.body,
+      opt.actions && opt.actions.length ? el('div', { class: 'm-acts' }, opt.actions.map(a =>
+        el('button', { class: 'btn ' + (a.cls || ''), text: a.label, onclick: () => { if (a.fn) a.fn(); if (!a.keep) close(); } }))) : null);
+    wrap.append(card);
+    if (!opt.noClose) wrap.addEventListener('click', e => { if (e.target === wrap) close(); });
+    $('#modals').append(wrap);
+    return { close, card };
+  }
+};
+function confirmBox(title, text, okLabel, danger) {
+  return new Promise(res => {
+    let ok = false;
+    Modal.open({ title, body: el('p', { class: 'm-text', text }), onClose: () => res(ok),
+      actions: [{ label: 'Annuler', cls: 'ghost' }, { label: okLabel || 'OK', cls: danger ? 'danger' : 'primary', fn: () => { ok = true; } }] });
+  });
+}
+function openKeyModal(after) {
+  const inp = el('input', { class: 'field', type: 'password', placeholder: 'sk-ant-…', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
+  inp.value = S.apiKey || '';
+  const status = el('div', { class: 'hint', style: 'margin-top:8px;min-height:18px' });
+  const m = Modal.open({
+    title: 'Clé API Anthropic',
+    body: [el('p', { class: 'm-text', text: 'Le narrateur est Claude Sonnet 5.5 (effort « low »). Pour jouer, colle ta clé API Anthropic : tu la crées sur platform.claude.com, rubrique « API keys ». Elle reste sur cet appareil et n\'est envoyée qu\'à api.anthropic.com.' }), inp, status],
+    actions: [{ label: 'Plus tard', cls: 'ghost' }, {
+      label: 'Enregistrer', cls: 'primary', keep: true, fn: async () => {
+        const k = inp.value.trim();
+        if (!k) { status.textContent = 'Colle d\'abord ta clé.'; return; }
+        S.apiKey = k; saveSettings();
+        status.textContent = 'Vérification de la clé…';
+        let verdict = 'unknown';
+        try {
+          const r = await fetch('https://api.anthropic.com/v1/models/' + MODEL, { headers: { 'x-api-key': k, 'anthropic-version': API_VERSION, 'anthropic-dangerous-direct-browser-access': 'true' } });
+          verdict = r.ok ? 'ok' : (r.status === 401 || r.status === 403) ? 'bad' : 'unknown';
+        } catch (e) {}
+        if (verdict === 'bad') { status.textContent = '✖ Cette clé est refusée par Anthropic. Vérifie-la et réessaie.'; return; }
+        toast(verdict === 'ok' ? 'Clé valide et enregistrée ✔' : 'Clé enregistrée (vérification impossible pour l\'instant)');
+        m.close(); refreshTitle(); if (G) { requeueSprites(); renderPanel(); }
+        if (after) after();
+      }
+    }]
+  });
+  setTimeout(() => inp.focus(), 50);
+}
+
+// ---------------------------------------------------------------- journal du récit (log)
+const logBox = () => $('#log-in');
+function nearBottom() { const l = $('#log'); return l.scrollHeight - l.scrollTop - l.clientHeight < 160; }
+function scrollDown(force) { const l = $('#log'); if (force || nearBottom()) l.scrollTop = l.scrollHeight; }
+function renderEntry(e) {
+  switch (e.t) {
+    case 'narr': return el('div', { class: 'le e-narr' + (e.setup ? ' setup' : '') + (e.first ? ' first' : ''), html: md(e.text) });
+    case 'act': return el('div', { class: 'le e-act' }, el('span', { text: e.text }));
+    case 'roll': {
+      const v = VERDICT[e.verdict] ? e.verdict : 'fail';
+      return el('div', { class: 'le e-roll v-' + v },
+        dieSVG(e.nat, 'die rd' + (v === 'crit' ? ' r-crit' : v === 'fumble' ? ' r-fumble' : '')),
+        el('div', { class: 'rt' }, el('div', { class: 'rv', text: VERDICT[v].ui.replace(' !', '') }),
+          el('b', { text: e.title || STAT_NAMES[e.stat] || 'Jet' }), ' · difficulté ' + e.dc, ' — d20 ', el('b', { text: e.nat }), e.adv && e.adv !== 'normal' ? ' (' + (e.adv === 'avantage' ? '▲' : '▼') + ' ' + e.d1 + ' / ' + e.d2 + ')' : '',
+          ' ' + (e.mod >= 0 ? '+' : '−') + ' ' + Math.abs(e.mod) + ' = ', el('b', { text: e.total }),
+          e.mana ? ' · ✨ −' + e.mana + ' mana' : '', e.hpPaid ? ' · surcharge −' + e.hpPaid + ' PV' : ''));
+    }
+    case 'fx': return el('div', { class: 'le e-fx' }, (e.chips || []).map(c => el('span', { class: 'chip ' + c.k, text: c.text })));
+    case 'loot': {
+      const isSpell = e.kind === 'sort';
+      const o = isSpell ? G.spells.find(s => s.id === e.id) : G.items.find(i => i.id === e.id);
+      const n = el('div', { class: 'le e-loot' }, spriteEl(isSpell ? 'sort' : 'objet', o || { id: e.id }, 38),
+        el('div', { class: 'lt' }, el('small', { text: isSpell ? 'Sort appris' : 'Obtenu' }),
+          el('b', { text: e.name + (e.qty > 1 ? ' ×' + e.qty : '') + (isSpell ? ' · ' + e.cost + ' mana' : '') }), el('span', { text: e.desc || '' })));
+      n.style.cursor = 'pointer';
+      n.addEventListener('click', () => { if (isSpell) openPanel('spells'); else { openPanel('inv'); if (G.items.some(i => i.id === e.id)) { UI.sub = e.id; renderPanel(); } } });
+      return n;
+    }
+    case 'sys': return el('div', { class: 'le e-sys' + (e.big ? ' big' : ''), text: e.text });
+    default: return el('div', { class: 'le' });
+  }
+}
+function pushLog(e) {
+  G.log.push(e);
+  if (G.log.length > 500) {
+    const cut = G.log.length - 400;
+    G.log.splice(0, cut);
+    if (pending && pending.logMark != null) pending.logMark = Math.max(0, pending.logMark - cut);
+    renderLog(); return;
+  }
+  logBox().append(renderEntry(e));
+  scrollDown(true);
+}
+function truncateLog(n) {
+  G.log.length = Math.min(G.log.length, n);
+  $$('#log-in > .le').slice(n).forEach(x => x.remove());
+  $$('#log-in > .e-err').forEach(x => x.remove());
+}
+function renderLog() {
+  const box = logBox(); box.innerHTML = '';
+  if (G) G.log.forEach(e => box.append(renderEntry(e)));
+  const l = $('#log'); l.style.scrollBehavior = 'auto'; l.scrollTop = l.scrollHeight; l.style.scrollBehavior = '';
+}
+let thinkEl = null;
+const THINK_LINES = ['Le Maître du Jeu réfléchit…', 'Le destin hésite…', 'Le monde retient son souffle…', 'Le narrateur consulte ses notes…', 'Quelque part, un dé roule…'];
+function showThinking(on, label) {
+  if (on) {
+    if (!thinkEl) thinkEl = el('div', { class: 'e-think' }, dieSVG('', 'die'), el('span'));
+    thinkEl.lastChild.textContent = label || pick(THINK_LINES);
+    logBox().append(thinkEl); scrollDown(true);
+  } else if (thinkEl) thinkEl.remove();
+}
+function liveNarr() {
+  const n = el('div', { class: 'e-narr live' });
+  logBox().append(n);
+  let raf = 0, txt = '';
+  return {
+    set(t) { txt = t; if (!raf) raf = requestAnimationFrame(() => { raf = 0; n.innerHTML = md(txt); scrollDown(); }); },
+    remove() { if (raf) cancelAnimationFrame(raf); n.remove(); }
+  };
+}
+function showTurnError(e, p) {
+  const isApi = e instanceof ApiError;
+  if (!isApi) console.error(e);
+  const msg = !isApi ? 'Erreur inattendue : ' + ((e && e.message) || e)
+    : e.kind === 'refusal' ? 'Le narrateur a décliné cette action. Reformule-la ou tente autre chose.' : e.message;
+  const card = el('div', { class: 'e-err' });
+  const btns = [el('button', { class: 'btn sm primary', text: 'Réessayer', onclick: () => { card.remove(); runTurn(p); } })];
+  if (isApi && (e.kind === 'auth' || e.kind === 'nokey')) btns.push(el('button', { class: 'btn sm', text: 'Changer la clé', onclick: () => openKeyModal() }));
+  if (p.intro) btns.push(el('button', { class: 'btn sm ghost', text: 'Retour au menu', onclick: () => { card.remove(); pending = null; goTitle(); } }));
+  else btns.push(el('button', { class: 'btn sm ghost', text: 'Annuler l\'action', onclick: () => { card.remove(); dropPending(true); } }));
+  card.append(el('div', { text: msg }), el('div', { class: 'row wrap' }, btns));
+  logBox().append(card); scrollDown(true);
+}
+// Abandonne un tour resté en suspens après une erreur.
+function dropPending(restoreInput) {
+  const p = pending; if (!p) return;
+  pending = null;
+  $$('#log-in > .e-err').forEach(x => x.remove());
+  if (p.intro) return;
+  if (p.roll && prevSnap) { loadState(JSON.parse(prevSnap), true); }
+  else cancelTurn(p, false);
+  if (restoreInput) { $('#inp').value = p.action; autoGrow(); }
+}
+
+// ---------------------------------------------------------------- HUD, choix, saisie
+function updateHUD() {
+  if (!G) return;
+  const H = G.hero;
+  $('#h-loc').textContent = G.location || H.name;
+  $('#h-time').textContent = [G.time, H.name + ' · ' + H.archName].filter(Boolean).join(' — ');
+  $('#hp-fill').style.width = clamp(H.hp / H.hpMax * 100, 0, 100) + '%';
+  $('#hp-txt').textContent = H.hp + '/' + H.hpMax + ' PV';
+  $('#mana-fill').style.width = (S.god ? 100 : clamp(H.mana / H.manaMax * 100, 0, 100)) + '%';
+  $('#mana-txt').textContent = S.god ? '∞ mana' : H.mana + '/' + H.manaMax + ' mana';
+  $('#h-gold').textContent = S.god ? '∞' : H.gold;
+  $('#h-lvl').textContent = H.level;
+  $('#xp-fill').style.width = clamp(H.xp / xpNeed(H.level) * 100, 0, 100) + '%';
+  $('#h-god').style.display = S.god ? '' : 'none';
+  document.body.setAttribute('data-mood', G.mood || 'calme');
+  $$('.hb[data-tab]').forEach(b => {
+    const t = b.getAttribute('data-tab');
+    b.classList.toggle('on', UI.tab === t && (isWide() || $('#panel').classList.contains('open')));
+    const old = b.querySelector('.dot'); if (old) old.remove();
+    if (t === 'hero' && H.statPoints > 0) b.append(el('span', { class: 'dot', text: '+' + H.statPoints }));
+  });
+}
+function hudPulse(kind) {
+  const b = $('#hp-bar'), c = kind === 'dmg' ? 'shake' : 'flash-heal';
+  b.classList.remove('shake', 'flash-heal'); void b.offsetWidth; b.classList.add(c);
+}
+function renderChoices() {
+  const box = $('#choices'); box.innerHTML = '';
+  if (!G) return;
+  if (G.dead) { box.append(el('button', { class: 'choice', text: '☠ Tu es mort — voir les options', onclick: showDeath })); return; }
+  if (pending) return;
+  G.choices.forEach(c => box.append(el('button', { class: 'choice', text: c, onclick: () => act(c) })));
+}
+function setBusy(b) {
+  busy = b;
+  $('#dock').classList.toggle('busy', b);
+  $('#inp').placeholder = G && G.dead ? 'Ton histoire s\'est achevée…' : b ? 'Le récit se déroule…' : 'Que fais-tu ? Tout est possible…';
+}
+function autoGrow() { const i = $('#inp'); i.style.height = 'auto'; i.style.height = Math.min(132, i.scrollHeight + 2) + 'px'; }
+function prefill(text) {
+  if (!isWide()) closePanel();
+  const i = $('#inp'); i.value = text; autoGrow(); i.focus();
+  try { i.setSelectionRange(text.length, text.length); } catch (e) {}
+}
+function sendInput() {
+  const i = $('#inp'), t = i.value.trim();
+  if (!t || busy) return;
+  if (pending) dropPending(false);
+  i.value = ''; autoGrow();
+  act(t);
+}
+function actFromPanel(text) { if (busy) { toast('Attends la fin du tour.'); return; } if (!isWide()) closePanel(); if (pending) dropPending(false); act(text); }
+function renderAll() { updateHUD(); renderChoices(); renderPanel(); }
+
+// ---------------------------------------------------------------- panneau à onglets
+const TABS = [{ id: 'inv', ic: '🎒', name: 'Sac' }, { id: 'hero', ic: '👤', name: 'Héros' }, { id: 'spells', ic: '✨', name: 'Grimoire' }, { id: 'journal', ic: '📜', name: 'Journal' }, { id: 'settings', ic: '⚙️', name: 'Réglages' }];
+const UI = { tab: 'inv', sub: null };
+const isWide = () => window.matchMedia('(min-width:1000px)').matches;
+function openPanel(tab) { if (tab) { if (UI.tab !== tab) UI.sub = null; UI.tab = tab; } $('#panel').classList.add('open'); renderPanel(); updateHUD(); }
+function closePanel() { $('#panel').classList.remove('open'); updateHUD(); }
+function renderPanel() {
+  if (!G) return;
+  if (!isWide() && !$('#panel').classList.contains('open')) return;
+  const tabs = $('#p-tabs'); tabs.innerHTML = '';
+  TABS.forEach(t => tabs.append(el('button', { class: 'p-tab' + (UI.tab === t.id ? ' on' : ''), onclick: () => { UI.tab = t.id; UI.sub = null; renderPanel(); updateHUD(); } },
+    el('span', { class: 'ic', text: t.ic }), t.name)));
+  tabs.append(el('button', { class: 'p-close', text: '✕', onclick: closePanel }));
+  const body = $('#p-body'), keep = body.scrollTop;
+  body.innerHTML = '';
+  const content = UI.tab === 'inv' ? tabInv() : UI.tab === 'hero' ? tabHero() : UI.tab === 'spells' ? tabSpells() : UI.tab === 'journal' ? tabJournal() : buildSettings(true, renderPanel);
+  body.append(...[].concat(content).flat(3).filter(Boolean));
+  body.scrollTop = keep;
+}
+function tabInv() {
+  if (UI.sub) { const it = G.items.find(i => i.id === UI.sub); if (it) return itemDetail(it); UI.sub = null; }
+  const total = G.items.reduce((a, i) => a + i.qty, 0), worth = G.items.reduce((a, i) => a + i.value * i.qty, 0);
+  const out = [el('h3', { class: 'p-h', text: 'Inventaire' }),
+    el('p', { class: 'p-sub', text: total ? total + ' objet' + (total > 1 ? 's' : '') + ' · valeur estimée 🪙 ' + worth + ' · touche un objet pour agir' : 'Tu peux tout ramasser : dis simplement ce que tu prends.' })];
+  if (!G.items.length) { out.push(el('div', { class: 'empty', text: 'Ton sac est vide. Pour l\'instant.' })); return out; }
+  const sorted = G.items.slice().sort((a, b) => (b.eq - a.eq) || (ITEM_TYPES.indexOf(a.type) - ITEM_TYPES.indexOf(b.type)));
+  out.push(el('div', { class: 'invgrid' }, sorted.map(it => el('button', { class: 'tile' + (it.eq ? ' eq' : ''), onclick: () => { UI.sub = it.id; renderPanel(); } },
+    spriteEl('objet', it, 52), el('span', { class: 'nm', text: it.name }),
+    it.qty > 1 ? el('span', { class: 'q', text: '×' + it.qty }) : null, it.eq ? el('span', { class: 'e', text: 'ÉQUIPÉ' }) : null))));
+  return out;
+}
+function itemDetail(it) {
+  const slot = SLOT_OF[it.type];
+  const tags = [el('span', { class: 'tag', text: TYPE_LABEL[it.type] || it.type })];
+  if (it.bonusVal) tags.push(el('span', { class: 'tag g', text: '+' + it.bonusVal + ' ' + STAT_NAMES[it.bonusStat] }));
+  if (it.qty > 1) tags.push(el('span', { class: 'tag', text: '×' + it.qty }));
+  if (it.value) tags.push(el('span', { class: 'tag', text: '🪙 ' + it.value }));
+  if (it.eq) tags.push(el('span', { class: 'tag g', text: 'Équipé' }));
+  return [
+    el('button', { class: 'back', text: '← Inventaire', onclick: () => { UI.sub = null; renderPanel(); } }),
+    el('div', { class: 'det-top' }, el('div', { class: 'frame' }, spriteEl('objet', it, 96)), el('div', { class: 'grow' }, el('h3', { text: it.name }), el('div', { class: 'tags' }, tags))),
+    el('p', { class: 'det-desc', text: it.desc || 'Un objet sans histoire. Pour l\'instant.' }),
+    el('div', { class: 'acts' },
+      el('button', { class: 'btn', text: 'Utiliser', onclick: () => actFromPanel('J\'utilise : ' + it.name) }),
+      el('button', { class: 'btn', text: 'Utiliser pour…', onclick: () => prefill('J\'utilise ' + it.name + ' pour ') }),
+      slot ? el('button', { class: 'btn' + (it.eq ? '' : ' primary'), text: it.eq ? 'Retirer' : 'Équiper', onclick: () => toggleEquip(it) }) : null,
+      el('button', { class: 'btn', text: 'Examiner', onclick: () => actFromPanel('J\'examine attentivement : ' + it.name) }),
+      el('button', { class: 'btn', text: 'Donner à…', onclick: () => prefill('Je donne ' + it.name + ' à ') }),
+      el('button', { class: 'btn danger', text: 'Jeter', onclick: () => actFromPanel('Je me débarrasse de : ' + it.name) })),
+    el('div', { class: 'sp' }),
+    el('button', { class: 'btn sm ghost block', text: '🎨 Redessiner l\'icône', onclick: () => redraw('objet', it.id) })
+  ];
+}
+function redraw(kind, id) {
+  const o = spriteTarget(kind, id); if (!o) return;
+  if (!S.apiKey) { openKeyModal(); return; }
+  o.sprite = null; o.ss = ''; queueSprite(kind, id); renderPanel(); refreshSprite(kind, id);
+}
+function tabHero() {
+  const H = G.hero;
+  const out = [
+    el('div', { class: 'hero-top' }, el('div', { class: 'frame', style: 'padding:6px;border-radius:14px;background:var(--bg2);border:1px solid var(--line)' }, spriteEl('portrait', H, 84)),
+      el('div', { class: 'grow' }, el('h3', { text: H.name }), el('p', { text: H.archName + ' · niveau ' + H.level }), H.concept ? el('p', { text: H.concept }) : null)),
+    el('div', { class: 'sec-t', text: 'Caractéristiques' + (H.statPoints > 0 ? ' — ' + H.statPoints + ' point' + (H.statPoints > 1 ? 's' : '') + ' à répartir' : '') }),
+    el('div', { class: 'sg' }, STATS.map(s => el('div', { class: 'sbox' + (H.prof.includes(s) ? ' prof' : ''), title: STAT_HINT[s] },
+      el('small', { text: STAT_NAMES[s].toUpperCase() }), el('b', { text: H.stats[s] }), el('i', { text: fmtMod(mod(H.stats[s]) + (H.prof.includes(s) ? profBonus() : 0) + equipBonus(s)) }),
+      H.statPoints > 0 && H.stats[s] < 20 ? el('button', { class: 'plus', text: '+', onclick: () => { H.stats[s]++; H.statPoints--; recalcMax(false); note('Le héros a renforcé sa caractéristique ' + STAT_NAMES[s] + '.'); Snd.tap(); autosave(); renderAll(); } }) : null))),
+    el('p', { class: 'hint', style: 'margin-top:8px', text: 'Le bonus affiché est ce qui s\'ajoute au d20 (caractéristique + maîtrise ' + fmtMod(profBonus()) + ' sur les cadres dorés + équipement).' }),
+    el('div', { class: 'sec-t', text: 'État' }),
+    el('div', { class: 'kv' }, el('span', { text: 'Points de vie' }), el('span', { text: H.hp + ' / ' + H.hpMax })),
+    el('div', { class: 'kv' }, el('span', { text: 'Mana' }), el('span', { text: S.god ? '∞' : H.mana + ' / ' + H.manaMax })),
+    el('div', { class: 'kv' }, el('span', { text: 'Expérience' }), el('span', { text: H.xp + ' / ' + xpNeed(H.level) + ' XP' })),
+    el('div', { class: 'kv' }, el('span', { text: 'Or' }), el('span', { text: S.god ? '∞' : '🪙 ' + H.gold })),
+    el('div', { class: 'kv' }, el('span', { text: 'Dernière chance' }), el('span', { text: H.lastStandUsed ? 'utilisée (repos long requis)' : 'disponible' })),
+    el('div', { class: 'kv' }, el('span', { text: 'Monde' }), el('span', { text: G.world.name })),
+    el('div', { class: 'kv' }, el('span', { text: 'Mode' }), el('span', { text: DIFFS[G.diff].icon + ' ' + DIFFS[G.diff].name })),
+    el('div', { class: 'sec-t', text: 'Équipement porté' })
+  ];
+  const eq = G.items.filter(i => i.eq);
+  if (!eq.length) out.push(el('div', { class: 'empty', text: 'Rien d\'équipé. Ouvre ton sac pour t\'équiper.' }));
+  eq.forEach(it => out.push(el('button', { class: 'li', onclick: () => { UI.tab = 'inv'; UI.sub = it.id; renderPanel(); updateHUD(); } }, spriteEl('objet', it, 44),
+    el('div', { class: 'lt' }, el('b', { text: it.name }), el('span', { text: (TYPE_LABEL[it.type] || '') + (it.bonusVal ? ' · +' + it.bonusVal + ' ' + STAT_NAMES[it.bonusStat] : '') })))));
+  out.push(el('div', { class: 'sec-t', text: 'Statuts' }));
+  out.push(G.statuses.length ? el('div', { class: 'places' }, G.statuses.map(s => el('span', { class: 'chip st', text: '◈ ' + s }))) : el('div', { class: 'empty', text: 'Aucun effet en cours.' }));
+  out.push(el('div', { class: 'sp' }), el('button', { class: 'btn sm ghost block', text: '🎨 Redessiner le portrait', onclick: () => redraw('portrait', 'hero') }));
+  return out;
+}
+function tabSpells() {
+  const H = G.hero;
+  const out = [el('h3', { class: 'p-h', text: 'Grimoire' }),
+    el('p', { class: 'p-sub', text: 'Mana : ' + (S.god ? '∞' : H.mana + ' / ' + H.manaMax) + '. Un sort connu coûte son prix. Une magie improvisée coûte plus cher et reste plus risquée. À court de mana, tu peux surcharger… en payant de ta vie. Le mana ne revient qu\'avec le repos, les potions ou les lieux de pouvoir.' })];
+  if (!G.spells.length) out.push(el('div', { class: 'empty', text: 'Tu ne connais encore aucun sort. Cherche un grimoire, un maître… ou improvise.' }));
+  G.spells.forEach(sp => out.push(el('button', { class: 'li', onclick: () => prefill('Je lance ' + sp.name + ' ') }, spriteEl('sort', sp, 44),
+    el('div', { class: 'lt' }, el('b', { text: sp.name }), el('span', { text: sp.desc })), el('span', { class: 'cost', text: sp.cost + ' ✨' }))));
+  out.push(el('div', { class: 'sp' }), el('button', { class: 'btn block', text: '✨ Tenter une magie improvisée', onclick: () => prefill('J\'improvise un sort : ') }));
+  return out;
+}
+function tabJournal() {
+  const out = [el('h3', { class: 'p-h', text: 'Journal' }), el('p', { class: 'p-sub', text: 'Tour ' + G.turn + (G.location ? ' · ' + G.location : '') + (G.time ? ' · ' + G.time : '') })];
+  const act = G.quests.filter(q => q.status === 'active'), old = G.quests.filter(q => q.status !== 'active');
+  out.push(el('div', { class: 'sec-t', text: 'Quêtes en cours' }));
+  if (!act.length) out.push(el('div', { class: 'empty', text: 'Aucune quête. Le monde t\'attend.' }));
+  act.forEach(q => out.push(el('div', { class: 'quest' }, el('b', { text: q.title }), q.note ? el('span', { text: q.note }) : null)));
+  if (old.length) {
+    out.push(el('div', { class: 'sec-t', text: 'Quêtes closes' }));
+    old.slice().reverse().forEach(q => out.push(el('div', { class: 'quest ' + q.status }, el('b', { text: (q.status === 'done' ? '✅ ' : '✖ ') + q.title }), q.note ? el('span', { text: q.note }) : null)));
+  }
+  out.push(el('div', { class: 'sec-t', text: 'Lieux visités' }));
+  out.push(G.places.length ? el('div', { class: 'places' }, G.places.map(pl => el('button', { class: 'chip loc', text: '📍 ' + pl, onclick: () => prefill('Je retourne à : ' + pl) })))
+    : el('div', { class: 'empty', text: 'Nulle part encore.' }));
+  out.push(el('div', { class: 'sec-t', text: 'Chronique' }));
+  out.push(G.summary ? el('div', { class: 'chron', text: G.summary }) : el('div', { class: 'empty', text: 'La chronique s\'écrira d\'elle-même au fil de l\'aventure.' }));
+  return out;
+}
+
+// ---------------------------------------------------------------- réglages & DEV
+function setRow(title, sub, control) { return el('div', { class: 'set-row' }, el('div', { class: 'grow' }, el('b', { text: title }), sub ? el('small', { text: sub }) : null), control); }
+function applyTextSize() { document.documentElement.style.setProperty('--fs', S.textSize + 'px'); }
+function buildSettings(inGame, rerender) {
+  const out = [el('h3', { class: 'p-h', text: 'Réglages' })];
+  if (inGame) {
+    out.push(el('div', { class: 'sec-t', text: 'Partie' }),
+      el('div', { class: 'acts' },
+        el('button', { class: 'btn primary', text: '💾 Sauvegarder', onclick: () => openSlots('save') }),
+        el('button', { class: 'btn', text: '📂 Charger', onclick: () => openSlots('load') }),
+        el('button', { class: 'btn', text: '⇪ Exporter', onclick: openExport }),
+        el('button', { class: 'btn', text: '⇩ Importer', onclick: openImport })),
+      el('p', { class: 'hint', style: 'margin-top:8px', text: 'La partie est aussi sauvegardée automatiquement à chaque tour.' + (store.ok ? '' : ' ⚠ Ce navigateur bloque le stockage local : utilise « Exporter » pour garder ta partie.') }),
+      el('div', { class: 'sp' }),
+      el('button', { class: 'btn block ghost', text: '← Retour au menu principal', onclick: () => { if (busy) { toast('Attends la fin du tour.'); return; } goTitle(); } }));
+  }
+  out.push(el('div', { class: 'sec-t', text: 'Narrateur' }));
+  out.push(setRow('Clé API Anthropic', S.apiKey ? 'Enregistrée : ' + S.apiKey.slice(0, 7) + '…' + S.apiKey.slice(-4) : 'Aucune clé — indispensable pour jouer', el('button', { class: 'btn sm', text: S.apiKey ? 'Modifier' : 'Ajouter', onclick: () => openKeyModal(rerender) })));
+  const lang = el('select', { class: 'field', style: 'width:auto;min-width:130px', onchange: e => {
+    S.narrLang = e.target.value; saveSettings();
+    if (G && inGame) { G.lang = S.narrLang; note('Le joueur souhaite désormais que le récit soit écrit en : ' + S.narrLang + '.'); autosave(); }
+  } }, ['Français', 'English', 'Español', 'Deutsch', 'Italiano', 'Português'].map(l => el('option', { value: l, text: l, selected: (inGame && G ? G.lang : S.narrLang) === l })));
+  out.push(setRow('Langue du récit', 'La langue dans laquelle le narrateur écrit', lang));
+  out.push(setRow('Modèle', 'Claude Sonnet 5.5 · effort « low »', el('span', { class: 'tag', text: MODEL })));
+  out.push(el('div', { class: 'sec-t', text: 'Confort' }));
+  out.push(setRow('Taille du texte', S.textSize + ' px', el('div', { class: 'row' },
+    el('button', { class: 'btn sm', text: 'A−', onclick: () => { S.textSize = clamp(S.textSize - 1, 14, 24); saveSettings(); applyTextSize(); rerender(); } }),
+    el('button', { class: 'btn sm', text: 'A+', onclick: () => { S.textSize = clamp(S.textSize + 1, 14, 24); saveSettings(); applyTextSize(); rerender(); } }))));
+  out.push(setRow('Sons', 'Dés, réussites, butin', el('button', { class: 'sw' + (S.sound ? ' on' : ''), onclick: () => { S.sound = !S.sound; saveSettings(); Snd.init(); Snd.tap(); rerender(); } })));
+  out.push(el('div', { class: 'sp' }));
+  out.push(el('button', { class: 'btn sm ghost block', text: S.dev ? 'DEV — déverrouillé' : 'DEV', onclick: () => { if (S.dev) return; openDevCode(rerender); } }));
+  if (S.dev) out.push(buildDev(inGame, rerender));
+  return out;
+}
+function openDevCode(rerender) {
+  const inp = el('input', { class: 'field', placeholder: 'Code', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false' });
+  const status = el('div', { class: 'hint', style: 'margin-top:8px;min-height:18px' });
+  const go = () => {
+    if (inp.value.trim().toUpperCase() === 'BURGER') {
+      S.dev = true; S.god = true; saveSettings(); m.close();
+      toast('🍔 Mode dieu activé'); if (G) { note('Le héros est désormais béni par une puissance supérieure (mode test) : il ne peut pas mourir.'); renderAll(); } rerender();
+    } else { status.textContent = 'Code incorrect.'; inp.select(); }
+  };
+  const m = Modal.open({ title: 'Accès développeur', body: [el('p', { class: 'm-text', text: 'Entre le code pour déverrouiller les outils de test.' }), inp, status], actions: [{ label: 'Annuler', cls: 'ghost' }, { label: 'Valider', cls: 'primary', keep: true, fn: go }] });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  setTimeout(() => inp.focus(), 50);
+}
+function usageLine(u) {
+  const cost = (u.in * PRICE.in + u.out * PRICE.out + u.cr * PRICE.cacheRead + u.cw * PRICE.cacheWrite) / 1e6;
+  return (u.calls || 0) + ' appels · entrée ' + u.in + ' · cache lu ' + u.cr + ' · cache écrit ' + u.cw + ' · sortie ' + u.out + ' tokens · ≈ ' + cost.toFixed(3) + ' $';
+}
+function dumpModal(title, obj) {
+  let s; try { s = typeof obj === 'string' ? obj : JSON.stringify(obj, (k, v) => (k === 'sprite' && v ? '[sprite]' : v), 2); } catch (e) { s = String(obj); }
+  Modal.open({ title, wide: true, body: el('pre', { class: 'dump', text: s || '(vide)' }), actions: [{ label: 'Copier', keep: true, fn: () => copyText(s) }, { label: 'Fermer', cls: 'primary' }] });
+}
+function buildDev(inGame, rerender) {
+  const H = G && G.hero;
+  const need = fn => () => { if (!G || !inGame) { toast('Lance une partie d\'abord.'); return; } if (busy) { toast('Attends la fin du tour.'); return; } fn(); autosave(); renderAll(); rerender(); };
+  const die = el('select', { class: 'field', style: 'width:auto;min-width:120px', onchange: e => { S.forceDie = int(e.target.value); saveSettings(); } },
+    [el('option', { value: 0, text: 'Hasard réel', selected: !S.forceDie })].concat(Array.from({ length: 20 }, (_, i) => el('option', { value: i + 1, text: 'Toujours ' + (i + 1), selected: S.forceDie === i + 1 }))));
+  return el('div', { class: 'devbox' },
+    el('h4', { text: '🍔 OUTILS DEV' }),
+    setRow('Mode dieu', 'Immortel, mana et or infinis', el('button', { class: 'sw' + (S.god ? ' on' : ''), onclick: () => { S.god = !S.god; saveSettings(); if (G) renderAll(); rerender(); } })),
+    setRow('Dé forcé', 'Actif en mode dieu uniquement', die),
+    el('div', { class: 'sp' }),
+    el('div', { class: 'devgrid' },
+      el('button', { class: 'btn sm', text: '+100 XP', onclick: need(() => { H.xp += 100; while (H.xp >= xpNeed(H.level) && H.level < 20) { H.xp -= xpNeed(H.level); H.level++; H.statPoints++; recalcMax(true); pushLog({ t: 'sys', big: true, text: '⭐ Niveau ' + H.level + ' (DEV)' }); } }) }),
+      el('button', { class: 'btn sm', text: 'Soin complet', onclick: need(() => { H.hp = H.hpMax; H.mana = H.manaMax; H.lastStandUsed = false; }) }),
+      el('button', { class: 'btn sm', text: '+1 point de carac.', onclick: need(() => { H.statPoints++; }) }),
+      el('button', { class: 'btn sm', text: '+500 or', onclick: need(() => { H.gold += 500; }) }),
+      el('button', { class: 'btn sm', text: 'Créer un objet', onclick: need(devAddItem) }),
+      el('button', { class: 'btn sm', text: 'Apprendre un sort', onclick: need(devAddSpell) }),
+      el('button', { class: 'btn sm', text: 'Annuler le dernier tour', onclick: need(() => { undoTurn(); }) }),
+      el('button', { class: 'btn sm', text: 'Forcer la chronique', onclick: need(() => { if (G.hist.length < 4) { toast('Pas assez de tours.'); return; } setBusy(true); summarize(Math.min(G.hist.length - 2, 16) & ~1).then(() => toast('Chronique mise à jour.'), e => toast('Échec : ' + e.message)).then(() => { setBusy(false); autosave(); renderAll(); }); }) }),
+      el('button', { class: 'btn sm', text: 'Ressusciter', onclick: need(() => { G.dead = false; H.hp = H.hpMax; $$('#modals .modal').forEach(m => m.remove()); setBusy(false); }) }),
+      el('button', { class: 'btn sm', text: 'État (JSON)', onclick: () => dumpModal('État de la partie', G || '(aucune partie)') }),
+      el('button', { class: 'btn sm', text: 'Dernière requête', onclick: () => dumpModal('Dernière requête', DEV.lastReq) }),
+      el('button', { class: 'btn sm', text: 'Dernière réponse', onclick: () => dumpModal('Dernière réponse', DEV.lastRes) })),
+    el('p', { class: 'hint', style: 'margin-top:10px', text: 'Session : ' + usageLine(DEV.total) }),
+    G && inGame ? el('p', { class: 'hint', text: 'Cette partie : ' + usageLine(G.usage) }) : null,
+    el('div', { class: 'sp' }),
+    el('button', { class: 'btn sm ghost block', text: 'Verrouiller les outils DEV', onclick: () => { S.dev = false; S.god = false; S.forceDie = 0; saveSettings(); if (G) renderAll(); rerender(); } }));
+}
+function devAddItem() {
+  const name = el('input', { class: 'field', placeholder: 'Nom (ex. Fromage légendaire)' }), desc = el('textarea', { class: 'field', rows: 2, placeholder: 'Description (sert à dessiner l\'icône)' });
+  const type = el('select', { class: 'field' }, ITEM_TYPES.map(t => el('option', { value: t, text: TYPE_LABEL[t] })));
+  Modal.open({ title: 'Créer un objet', body: [name, el('div', { class: 'sp' }), desc, el('div', { class: 'sp' }), type], actions: [{ label: 'Annuler', cls: 'ghost' }, { label: 'Créer', cls: 'primary', fn: () => {
+    const eqp = !!SLOT_OF[type.value];
+    const got = addItem({ name: name.value, description: desc.value, type: type.value, qty: 1, bonus_stat: eqp ? G.hero.prof[0] : 'AUCUN', bonus_value: eqp ? 2 : 0, value: 50 });
+    if (got) { pushLog({ t: 'loot', id: got.item.id, name: got.item.name, desc: got.item.desc, qty: got.qty }); note('Le héros a trouvé dans ses affaires : ' + got.item.name + '.'); autosave(); renderAll(); }
+  } }] });
+}
+function devAddSpell() {
+  const name = el('input', { class: 'field', placeholder: 'Nom du sort' }), desc = el('textarea', { class: 'field', rows: 2, placeholder: 'Effet' });
+  const cost = el('input', { class: 'field', type: 'number', value: 3, min: 0, max: 30 });
+  Modal.open({ title: 'Apprendre un sort', body: [name, el('div', { class: 'sp' }), desc, el('div', { class: 'sp' }), el('label', { class: 'lab', text: 'Coût en mana' }), cost], actions: [{ label: 'Annuler', cls: 'ghost' }, { label: 'Apprendre', cls: 'primary', fn: () => {
+    const sp = addSpell({ name: name.value, description: desc.value, mana_cost: cost.value });
+    if (sp) { pushLog({ t: 'loot', id: sp.id, kind: 'sort', name: sp.name, desc: sp.desc, cost: sp.cost }); autosave(); renderAll(); }
+  } }] });
+}
+
+// ---------------------------------------------------------------- sauvegardes
+const SLOTS = ['vf_slot1', 'vf_slot2', 'vf_slot3'];
+let autosaveTimer = 0;
+function autosave() {
+  if (!G) return;
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => { if (G && !busy) { G.saved = Date.now(); store.set('vf_auto', G); } else if (G) autosave(); }, 300);
+}
+function saveNow() { if (G && !busy && G.hist.length) { G.saved = Date.now(); store.set('vf_auto', G); } }
+function saveToSlot(n) {
+  G.saved = Date.now(); G.slot = n;
+  const ok = store.set(SLOTS[n - 1], G); store.set('vf_auto', G);
+  toast(ok ? '💾 Partie sauvegardée — emplacement ' + n : '⚠ Stockage bloqué : utilise « Exporter »');
+  Snd.tap();
+}
+function quickSave() {
+  if (!G) return;
+  if (busy) { toast('Attends la fin du tour.'); return; }
+  if (G.slot) saveToSlot(G.slot); else openSlots('save');
+}
+function saveInfo(d) {
+  if (!d || !d.hero) return null;
+  return d.hero.name + ' · ' + (d.hero.archName || '') + ' niv. ' + d.hero.level + (d.dead ? ' · ☠' : '') + '\n' + (d.location || '…') + ' · tour ' + (d.turn || 0) + ' · ' + fmtDate(d.saved || d.created);
+}
+function openSlots(mode) {
+  if (mode === 'save' && busy) { toast('Attends la fin du tour.'); return; }
+  const body = el('div');
+  let m;
+  const draw = () => {
+    body.innerHTML = '';
+    const rows = [{ key: 'vf_auto', label: 'Sauvegarde automatique', auto: true }].concat(SLOTS.map((k, i) => ({ key: k, label: 'Emplacement ' + (i + 1), n: i + 1 })));
+    rows.forEach(r => {
+      if (mode === 'save' && r.auto) return;
+      const d = store.get(r.key), info = saveInfo(d);
+      const btns = [];
+      if (mode === 'save') btns.push(el('button', { class: 'btn sm primary', text: info ? 'Écraser' : 'Sauvegarder ici', onclick: () => { saveToSlot(r.n); m.close(); } }));
+      if (mode === 'load' && info) btns.push(el('button', { class: 'btn sm primary', text: 'Charger', onclick: () => { m.close(); $$('#modals .modal').forEach(x => x.remove()); loadState(d); toast('Partie chargée.'); } }));
+      if (info && !r.auto) btns.push(el('button', { class: 'btn sm danger', text: 'Supprimer', onclick: async () => { if (await confirmBox('Supprimer ?', 'Cette sauvegarde sera définitivement effacée.', 'Supprimer', true)) { store.del(r.key); draw(); } } }));
+      body.append(el('div', { class: 'slot' }, el('b', { text: r.label }), el('small', { style: 'white-space:pre-line', text: info || 'Vide' }), el('div', { class: 'row wrap' }, btns)));
+    });
+    body.append(el('div', { class: 'row wrap', style: 'margin-top:6px' },
+      mode === 'load' ? el('button', { class: 'btn sm ghost', text: '⇩ Importer un code de partie', onclick: () => { m.close(); openImport(); } }) : null,
+      mode === 'save' ? el('button', { class: 'btn sm ghost', text: '⇪ Exporter un code de partie', onclick: () => { m.close(); openExport(); } }) : null));
+  };
+  m = Modal.open({ title: mode === 'save' ? 'Sauvegarder' : 'Charger une partie', body });
+  draw();
+}
+function encodeSave(g) { return 'VF1:' + btoa(unescape(encodeURIComponent(JSON.stringify(g)))); }
+function decodeSave(code) {
+  code = String(code || '').trim().replace(/\s+/g, '');
+  if (code.startsWith('VF1:')) code = code.slice(4);
+  const d = JSON.parse(decodeURIComponent(escape(atob(code))));
+  if (!d || !d.hero || !d.hero.stats) throw new Error('format');
+  return d;
+}
+function copyText(s) {
+  const done = () => toast('Copié dans le presse-papiers.');
+  const legacy = () => { const t = el('textarea', { style: 'position:fixed;opacity:0;top:0;left:0' }); t.value = s; document.body.append(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) { toast('Copie impossible : sélectionne le texte à la main.'); } t.remove(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done, legacy); else legacy();
+}
+function openExport() {
+  if (!G) return;
+  const code = encodeSave(G);
+  const ta = el('textarea', { class: 'field', rows: 6, readonly: true, style: 'font-family:var(--mono);font-size:11px' }); ta.value = code;
+  ta.addEventListener('focus', () => ta.select());
+  Modal.open({ title: 'Exporter la partie', body: [el('p', { class: 'm-text', text: 'Copie ce code et garde-le où tu veux (Notes, e-mail…). Il contient toute ta partie et se recharge avec « Importer ».' }), ta],
+    actions: [{ label: 'Copier le code', cls: 'primary', keep: true, fn: () => copyText(code) }, { label: 'Fermer' }] });
+}
+function openImport() {
+  const ta = el('textarea', { class: 'field', rows: 6, placeholder: 'Colle ici ton code de partie (VF1:…)', style: 'font-family:var(--mono);font-size:11px' });
+  const status = el('div', { class: 'hint', style: 'margin-top:8px;min-height:18px' });
+  const m = Modal.open({ title: 'Importer une partie', body: [ta, status], actions: [{ label: 'Annuler', cls: 'ghost' }, { label: 'Charger', cls: 'primary', keep: true, fn: () => {
+    try { const d = decodeSave(ta.value); m.close(); $$('#modals .modal').forEach(x => x.remove()); loadState(d); toast('Partie importée.'); }
+    catch (e) { status.textContent = '✖ Code illisible. Vérifie qu\'il est complet.'; }
+  } }] });
+}
+function loadState(data, quiet) {
+  G = migrate(data);
+  pending = null; UI.sub = null;
+  if (!quiet) prevSnap = null;
+  show('game');
+  setBusy(false);
+  renderLog(); renderAll();
+  requeueSprites();
+  if (G.dead) showDeath();
+  else if (!G.hist.length && !quiet) startIntro();
+}
+function showDeath() {
+  if (!G || !G.dead) return;
+  if ($('#modals .death')) return;
+  const H = G.hero, acts = [];
+  const hasSnap = prevSnap || (store.get('vf_prev') || {}).id === G.id;
+  if (G.diff !== 'hardcore' && hasSnap) acts.push({ label: '↩ Revenir un tour en arrière', cls: 'primary', fn: () => { undoTurn(); } });
+  acts.push({ label: '📂 Charger une partie', fn: () => openSlots('load') });
+  acts.push({ label: '✦ Nouvelle aventure', fn: () => { G = null; openCreate(); } });
+  const m = Modal.open({ title: '☠ Tu es mort', body: el('p', { class: 'm-text', text: H.name + ' s\'éteint' + (G.location ? ' — ' + G.location : '') + ', au terme de ' + G.turn + ' tours, niveau ' + H.level + '.' + (G.diff === 'hardcore' ? ' En mode Hardcore, la mort ne se négocie pas.' : ' Mais les histoires se réécrivent…') }), actions: acts });
+  m.card.parentNode.classList.add('death');
+}
+function showEnding() {
+  Modal.open({ title: '✦ Fin de l\'histoire', body: el('p', { class: 'm-text', text: 'Ton aventure atteint sa conclusion, après ' + G.turn + ' tours. Mais rien ne t\'empêche de continuer à explorer ce monde : il t\'appartient.' }),
+    actions: [{ label: 'Continuer à explorer', cls: 'primary' }, { label: 'Menu principal', fn: goTitle }] });
+}
+
+// ---------------------------------------------------------------- écrans : titre & création
+function show(name) { $$('.screen').forEach(s => s.classList.toggle('on', s.id === 'scr-' + name)); }
+function refreshTitle() {
+  const auto = store.get('vf_auto'), b = $('#t-continue');
+  if (auto && auto.hero) { b.style.display = ''; b.textContent = 'Continuer — ' + auto.hero.name + ' (niv. ' + auto.hero.level + ')'; } else b.style.display = 'none';
+  $('#t-new').className = 'btn' + (auto && auto.hero ? '' : ' primary');
+  $('#t-foot').textContent = 'Narrateur : Claude Sonnet 5.5 · effort « low »' + (S.apiKey ? '' : ' — clé API requise') + (store.ok ? '' : ' — ⚠ stockage local indisponible');
+}
+function goTitle() {
+  saveNow();
+  G = null; pending = null; prevSnap = null;
+  closePanel(); $$('#modals .modal').forEach(m => m.remove());
+  document.body.setAttribute('data-mood', 'calme');
+  show('title'); refreshTitle();
+}
+let C = null;
+function openCreate() {
+  $$('#modals .modal').forEach(m => m.remove());
+  const a = ARCHS[0];
+  C = { name: '', world: 'fantasy', customWorld: '', arch: a.id, concept: '', stats: Object.assign({}, a.base), budget: 72, diff: 'normal' };
+  show('create'); renderCreate();
+  $('.c-body').scrollTop = 0;
+}
+function renderCreate() {
+  const wrap = $('#c-wrap'); const keepScroll = $('.c-body').scrollTop;
+  wrap.innerHTML = '';
+  const a = archOf(C.arch);
+  const name = el('input', { class: 'field grow', placeholder: 'Le nom de ton héros', maxlength: 40 }); name.value = C.name;
+  name.addEventListener('input', () => { C.name = name.value; });
+  const concept = el('textarea', { class: 'field', rows: 2, maxlength: 400, placeholder: 'Facultatif — ex. ancienne cuisinière de bord devenue chasseuse de primes, terrifiée par les oiseaux' }); concept.value = C.concept;
+  concept.addEventListener('input', () => { C.concept = concept.value; });
+  const sum = STATS.reduce((s, k) => s + C.stats[k], 0), left = C.budget - sum;
+  const sec = (title, small, ...kids) => el('div', { class: 'c-sec' }, el('h3', {}, title, small ? el('small', { text: small }) : null), kids);
+  wrap.append(
+    sec('Qui es-tu ?', null,
+      el('div', { class: 'row' }, name, el('button', { class: 'btn', title: 'Nom au hasard', text: '🎲', onclick: () => { C.name = pick(NAMES); renderCreate(); } })),
+      el('div', { class: 'sp' }), el('label', { class: 'lab', text: 'Ton concept, en une phrase' }), concept),
+    sec('Le monde', 'où tout commence',
+      el('div', { class: 'cards' }, WORLDS.map(w => el('button', { class: 'card' + (C.world === w.id ? ' sel' : ''), onclick: () => { C.world = w.id; renderCreate(); } },
+        el('span', { class: 'ic', text: w.icon }), el('b', { text: w.name }), el('span', { text: w.short })))),
+      C.world === 'custom' ? (() => { const t = el('textarea', { class: 'field', rows: 3, maxlength: 900, style: 'margin-top:10px', placeholder: 'Décris ton monde : époque, ambiance, ce qui le rend unique, comment y fonctionne la magie…' }); t.value = C.customWorld; t.addEventListener('input', () => { C.customWorld = t.value; }); return t; })() : null),
+    sec('L\'archétype', 'ta base de jeu — ton concept fait le reste',
+      el('div', { class: 'cards' }, ARCHS.map(x => el('button', { class: 'card' + (C.arch === x.id ? ' sel' : ''), onclick: () => { C.arch = x.id; C.stats = Object.assign({}, x.base); C.budget = 72; renderCreate(); } },
+        el('span', { class: 'ic', text: x.icon }), el('b', { text: x.name }), el('span', { text: x.desc }),
+        el('span', { text: '❤ ' + x.hp + ' · ✨ ' + x.mana + ' · ' + x.prof.join(' + ') }))))),
+    sec('Caractéristiques', left > 0 ? left + ' point' + (left > 1 ? 's' : '') + ' à placer' : 'tout est réparti',
+      el('div', { class: 'statgrid' }, STATS.map(s => el('div', { class: 'statbox' + (a.prof.includes(s) ? ' prof' : '') },
+        el('div', { class: 'nm' }, el('b', { text: STAT_NAMES[s] }), el('small', { text: STAT_HINT[s] })),
+        el('button', { class: 'stp', text: '−', disabled: C.stats[s] <= 6, onclick: () => { C.stats[s]--; renderCreate(); } }),
+        el('span', { class: 'val', text: C.stats[s] }),
+        el('button', { class: 'stp', text: '+', disabled: C.stats[s] >= 18 || left <= 0, onclick: () => { C.stats[s]++; renderCreate(); } }),
+        el('span', { class: 'md', text: fmtMod(mod(C.stats[s])) })))),
+      el('div', { class: 'row wrap', style: 'margin-top:10px' },
+        el('button', { class: 'btn sm', text: '🎲 Tirer au hasard (4d6)', onclick: () => { STATS.forEach(s => { const r = [d6(), d6(), d6(), d6()].sort((x, y) => x - y); C.stats[s] = clamp(r[1] + r[2] + r[3], 6, 18); }); C.budget = STATS.reduce((t, k) => t + C.stats[k], 0); renderCreate(); } }),
+        el('button', { class: 'btn sm ghost', text: 'Réinitialiser', onclick: () => { C.stats = Object.assign({}, a.base); C.budget = 72; renderCreate(); } })),
+      el('p', { class: 'hint', style: 'margin-top:8px', text: 'Cadre doré = caractéristique maîtrisée (+2 aux jets). Le modificateur s\'ajoute au d20.' })),
+    sec('Le ton de la partie', null,
+      el('div', { class: 'cards' }, Object.keys(DIFFS).map(k => el('button', { class: 'card' + (C.diff === k ? ' sel' : ''), onclick: () => { C.diff = k; renderCreate(); } },
+        el('span', { class: 'ic', text: DIFFS[k].icon }), el('b', { text: DIFFS[k].name }), el('span', { text: DIFFS[k].desc }))))),
+    sec('Langue du récit', null, (() => { const s = el('select', { class: 'field', onchange: e => { S.narrLang = e.target.value; saveSettings(); } },
+      ['Français', 'English', 'Español', 'Deutsch', 'Italiano', 'Português'].map(l => el('option', { value: l, text: l, selected: S.narrLang === l }))); return s; })())
+  );
+  $('.c-body').scrollTop = keepScroll;
+}
+function beginAdventure() {
+  if (C.world === 'custom' && C.customWorld.trim().length < 12) { toast('Décris ton monde en quelques mots.'); return; }
+  const start = () => {
+    Snd.init();
+    G = newGameState(C); prevSnap = null; pending = null; UI.tab = 'inv'; UI.sub = null;
+    show('game'); renderLog(); renderAll();
+    queueSprite('portrait', 'hero');
+    startIntro();
+  };
+  if (!S.apiKey) openKeyModal(start); else start();
+}
+
+// ---------------------------------------------------------------- démarrage
+function init() {
+  applyTextSize();
+  $('#t-new').addEventListener('click', openCreate);
+  $('#t-continue').addEventListener('click', () => { const d = store.get('vf_auto'); if (d) loadState(d); });
+  $('#t-load').addEventListener('click', () => openSlots('load'));
+  $('#t-set').addEventListener('click', () => {
+    const body = el('div'); const draw = () => { body.innerHTML = ''; body.append(...buildSettings(false, draw).flat(3).filter(Boolean)); refreshTitle(); };
+    draw(); Modal.open({ title: '', wide: true, body });
+  });
+  $('#c-back').addEventListener('click', () => { show('title'); refreshTitle(); });
+  $('#c-go').addEventListener('click', beginAdventure);
+  $$('.hb[data-tab]').forEach(b => b.addEventListener('click', () => {
+    const t = b.getAttribute('data-tab');
+    if (!isWide() && $('#panel').classList.contains('open') && UI.tab === t) closePanel(); else openPanel(t);
+  }));
+  $('#b-save').addEventListener('click', quickSave);
+  $('.p-scrim').addEventListener('click', closePanel);
+  $('#hp-bar').addEventListener('click', () => openPanel('hero'));
+  $('#mana-bar').addEventListener('click', () => openPanel('spells'));
+  $('#send').addEventListener('click', sendInput);
+  const inp = $('#inp');
+  inp.addEventListener('input', autoGrow);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendInput(); } });
+  window.addEventListener('resize', () => { if (G) { renderPanel(); updateHUD(); } });
+  window.addEventListener('pagehide', saveNow);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+  refreshTitle();
+}
+init();
+</script>
+</body>
+</html>
