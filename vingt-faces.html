@@ -18,6 +18,8 @@
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --fs:17px;
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --gl:max(16px,env(safe-area-inset-left,0px)); --gr:max(16px,env(safe-area-inset-right,0px));
+  color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
@@ -60,7 +62,7 @@ label.lab{display:block;font-size:12px;letter-spacing:.09em;text-transform:upper
 hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
 
 /* ---------- écran titre ---------- */
-#scr-title{align-items:center;justify-content:center;padding:calc(24px + var(--sat)) 24px calc(24px + var(--sab));text-align:center;overflow:auto;
+#scr-title{align-items:center;justify-content:center;padding:calc(24px + var(--sat)) max(24px,var(--gr)) calc(24px + var(--sab)) max(24px,var(--gl));text-align:center;overflow:auto;
   background:radial-gradient(900px 500px at 50% 18%,#3a2a14 0%,transparent 60%),var(--bg)}
 .t-die{width:150px;height:150px;margin-bottom:10px;filter:drop-shadow(0 10px 30px #000a);animation:floaty 6s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(5deg)}}
@@ -71,9 +73,9 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
 
 /* ---------- création ---------- */
 #scr-create{background:var(--bg)}
-.c-head{padding:calc(12px + var(--sat)) 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--bg2)}
+.c-head{padding:calc(12px + var(--sat)) var(--gr) 12px var(--gl);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:var(--bg2)}
 .c-head h2{font-family:var(--serif);font-size:21px;color:var(--gold);flex:1}
-.c-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 28px}
+.c-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px var(--gr) 28px var(--gl)}
 .c-wrap{max-width:720px;margin:0 auto}
 .c-sec{margin-bottom:26px}
 .c-sec>h3{font-family:var(--serif);font-size:18px;margin-bottom:10px;color:var(--ink)}
@@ -94,14 +96,14 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
 .statbox.prof{border-color:var(--gold2)}
 .stp{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--bg3);font-size:18px;line-height:1}
 .stp:disabled{opacity:.3}
-.c-foot{padding:12px 16px calc(12px + var(--sab));border-top:1px solid var(--line);background:var(--bg2)}
+.c-foot{padding:12px var(--gr) calc(12px + var(--sab)) var(--gl);border-top:1px solid var(--line);background:var(--bg2)}
 .c-foot .btn{max-width:720px;margin:0 auto}
 
 /* ---------- jeu ---------- */
 #scr-game{background:
   radial-gradient(1100px 380px at 50% -80px,color-mix(in srgb,var(--mood) 16%,transparent),transparent 70%),var(--bg);
   transition:background .8s}
-#hud{padding:calc(8px + var(--sat)) 12px 8px;background:#161310ee;border-bottom:1px solid var(--line);position:relative;z-index:3;display:flex;flex-direction:column;gap:8px}
+#hud{padding:calc(8px + var(--sat)) var(--gr) 8px var(--gl);background:#161310ee;border-bottom:1px solid var(--line);position:relative;z-index:3;display:flex;flex-direction:column;gap:8px}
 #hud::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--mood),transparent);opacity:.7}
 .hud-top{display:flex;align-items:center;gap:10px;order:1}
 .hud-loc{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -129,7 +131,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
 
 #game-body{flex:1;min-height:0;display:flex}
 #game-main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
-#log{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 10px;scroll-behavior:smooth}
+#log{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px var(--gr) 10px var(--gl);scroll-behavior:smooth}
 #log-in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .e-narr{font-family:var(--serif);font-size:var(--fs);line-height:1.64;color:var(--ink);animation:fadeup .35s}
 .e-narr p{margin:0 0 .7em} .e-narr p:last-child{margin-bottom:0}
@@ -168,10 +170,12 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
 .e-err{padding:12px;border-radius:12px;border:1px solid #7a3a33;background:#2a1513;color:#f3c3bc;font-size:14px;line-height:1.45}
 .e-err .row{margin-top:10px}
 .e-think{display:flex;align-items:center;gap:10px;color:var(--dim);font-style:italic;font-family:var(--serif);font-size:15px}
-.e-think svg{width:26px;height:26px;animation:spin 2.2s linear infinite}
+.e-think svg{width:26px;height:26px;animation:spin 2.2s linear infinite;flex:none}
+.e-think span{flex:1}
+.e-think button{font-family:var(--sans);font-style:normal;font-size:12.5px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:5px 12px;min-height:30px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-#dock{padding:8px 12px calc(10px + var(--sab));border-top:1px solid var(--line);background:#161310f2}
+#dock{padding:8px var(--gr) calc(10px + var(--sab)) var(--gl);border-top:1px solid var(--line);background:#161310f2}
 #dock-in{max-width:720px;margin:0 auto}
 #choices{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 #choices::-webkit-scrollbar{display:none}
@@ -191,12 +195,12 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
 @keyframes fade{from{opacity:0}}
 .p-card{position:absolute;left:0;right:0;bottom:0;max-height:90%;height:90%;background:var(--bg2);border-top:1px solid var(--line);border-radius:18px 18px 0 0;display:flex;flex-direction:column;animation:slideup .25s cubic-bezier(.2,.8,.2,1)}
 @keyframes slideup{from{transform:translateY(40px);opacity:0}}
-.p-tabs{display:flex;gap:2px;padding:8px 8px 0;border-bottom:1px solid var(--line);align-items:flex-end}
+.p-tabs{display:flex;gap:2px;padding:8px max(8px,env(safe-area-inset-right,0px)) 0 max(8px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);align-items:flex-end}
 .p-tab{flex:1;padding:8px 2px 9px;border-radius:10px 10px 0 0;font-size:11px;color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid transparent;border-bottom:0;white-space:nowrap}
 .p-tab .ic{font-size:19px}
 .p-tab.on{background:var(--bg);border-color:var(--line);color:var(--gold)}
 .p-close{width:38px;height:38px;font-size:18px;color:var(--dim);margin-bottom:4px;flex:none}
-.p-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(18px + var(--sab));background:var(--bg)}
+.p-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px var(--gr) calc(18px + var(--sab)) var(--gl);background:var(--bg)}
 .p-h{font-family:var(--serif);font-size:18px;color:var(--gold);margin:0 0 4px}
 .p-sub{font-size:12.5px;color:var(--dim);margin-bottom:12px;line-height:1.4}
 .sec-t{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:18px 0 8px}
@@ -258,7 +262,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:28px;backgrou
 pre.dump{font-family:var(--mono);font-size:11px;line-height:1.4;background:#0b0908;border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;max-height:55vh;white-space:pre-wrap;word-break:break-word;color:#cdbfa5;margin:0}
 
 /* ---------- modales ---------- */
-.modal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:16px;background:#000b;animation:fade .2s}
+.modal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:#000b;animation:fade .2s}
 .m-card{width:min(480px,100%);max-height:92%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:18px;animation:pop .22s cubic-bezier(.2,.9,.3,1.2)}
 .m-card.wide{width:min(640px,100%)}
 @keyframes pop{from{transform:scale(.94);opacity:0}}
@@ -272,7 +276,7 @@ pre.dump{font-family:var(--mono);font-size:11px;line-height:1.4;background:#0b09
 .slot b{font-size:14.5px} .slot small{display:block;color:var(--dim);font-size:12.5px;margin:2px 0 8px;line-height:1.4}
 
 /* ---------- dé ---------- */
-#dice{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:radial-gradient(closest-side,#000c,#000e)}
+#dice{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:radial-gradient(closest-side,#000c,#000e)}
 #dice.on{display:flex;animation:fade .2s}
 .d-card{width:min(400px,100%);text-align:center;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:20px 18px 16px;animation:pop .25s cubic-bezier(.2,.9,.3,1.2)}
 .d-kick{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
@@ -323,7 +327,7 @@ pre.dump{font-family:var(--mono);font-size:11px;line-height:1.4;background:#0b09
   #panel{position:static;display:block;width:400px;flex:none;border-left:1px solid var(--line);z-index:1}
   .p-scrim,.p-close{display:none}
   .p-card{position:static;height:100%;max-height:none;border-radius:0;border-top:0;animation:none}
-  #log{padding:26px 28px 12px}
+  #log{padding:26px max(28px,var(--gr)) 12px max(28px,var(--gl))}
 }
 @media (prefers-reduced-motion:reduce){ *{animation-duration:.01s !important;transition-duration:.01s !important} }
 </style>
@@ -415,7 +419,9 @@ pre.dump{font-family:var(--mono);font-size:11px;line-height:1.4;background:#0b09
 
 // ---------------------------------------------------------------- constantes
 const MODEL = 'claude-sonnet-5-5';     // modèle demandé
-const EFFORT = 'low';                  // effort demandé
+// Publiée comme artifact dans Claude, la page passe par le compte Claude du joueur ; ailleurs, par une clé API.
+const HAS_HOST = !!(window.claude && typeof window.claude.use === 'function');
+const EFFORT = HAS_HOST ? 'medium' : 'low';   // effort demandé : moyen dans Claude, « low » avec une clé API
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2026-10-21';
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
@@ -573,6 +579,92 @@ class ApiError extends Error {
 }
 const DEV = { lastReq: null, lastRes: null, total: { in: 0, out: 0, cr: 0, cw: 0, calls: 0 } };
 
+// Deux façons de joindre le narrateur :
+//  - publiée comme artifact dans Claude, la page passe par claude.use("sample") : le compte Claude du joueur, sans clé ;
+//  - ouverte ailleurs (Koder, navigateur), elle appelle l'API Anthropic avec la clé du joueur.
+let SAMPLE = null;
+const sampleReady = HAS_HOST
+  ? Promise.resolve().then(() => window.claude.use('sample')).then(fn => { SAMPLE = typeof fn === 'function' ? fn : null; onNarratorReady(); return SAMPLE; }, () => null)
+  : Promise.resolve(null);
+const canNarrate = () => !!(SAMPLE || S.apiKey);
+function onNarratorReady() { try { refreshTitle(); if (G) { requeueSprites(); renderPanel(); } } catch (e) {} }
+// Vérifie qu'un narrateur est joignable, sinon explique quoi faire. Appelle `after` dès que c'est bon.
+async function needNarrator(after) {
+  if (HAS_HOST && !SAMPLE) await sampleReady;
+  if (canNarrate()) { if (after) after(); return; }
+  if (HAS_HOST) {
+    Modal.open({ title: 'Claude est injoignable ici', body: el('p', { class: 'm-text', text: 'Cette page ne peut pas joindre Claude dans cette vue. Ouvre-la depuis l\'application Claude, en étant connecté à ton compte.' }), actions: [{ label: 'Compris', cls: 'primary' }] });
+    return;
+  }
+  openKeyModal(after);
+}
+function parseLooseJSON(text) {
+  let data = null;
+  try { data = JSON.parse(text); }
+  catch (e) {
+    const a = text.indexOf('{'), b = text.lastIndexOf('}');
+    if (a >= 0 && b > a) { try { data = JSON.parse(text.slice(a, b + 1)); } catch (e2) {} }
+  }
+  return data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+}
+// Décrit un schéma JSON en clair, pour le narrateur intégré (qui n'a pas de sortie contrainte).
+function schemaHint(sc) {
+  if (sc.anyOf) return sc.anyOf.map(schemaHint).join(' ou ');
+  if (sc.type === 'null') return 'null';
+  if (sc.type === 'object') return '{' + Object.keys(sc.properties).map(k => JSON.stringify(k) + ': ' + schemaHint(sc.properties[k])).join(', ') + '}';
+  if (sc.type === 'array') return '[' + schemaHint(sc.items) + ', …]';
+  if (sc.enum) return JSON.stringify(sc.enum.join('|'));
+  if (sc.type === 'integer') return '0';
+  if (sc.type === 'boolean') return 'true|false';
+  return '"…"';
+}
+function sampleInput(opt) {
+  const txt = m => typeof m.content === 'string' ? m.content : m.content.map(b => b.text).join('\n');
+  const msgs = opt.messages, last = msgs[msgs.length - 1], past = msgs.slice(0, -1);
+  let s = opt.system;
+  if (opt.schema) s += '\n\n# Format de réponse\nTa réponse est lue par un programme : réponds uniquement par un objet JSON valide, sans texte autour et sans bloc de code. Il contient exactement ces champs, dans cet ordre (une barre verticale sépare les valeurs permises, 0 désigne un nombre entier) :\n' + schemaHint(opt.schema);
+  if (past.length) s += '\n\n# La partie jusqu\'ici (du plus ancien au plus récent)\n' + past.map(m => (m.role === 'user' ? '— JOUEUR —\n' : '— RÉCIT DÉJÀ RACONTÉ —\n') + txt(m)).join('\n\n');
+  s += '\n\n# ' + (past.length ? 'Message actuel' : 'Demande') + '\n' + txt(last);
+  if (opt.schema) s += '\n\nRéponds maintenant par l\'objet JSON seul.';
+  return s;
+}
+function mapSampleError(e) {
+  const code = (e && e.code) || 'upstream_error';
+  const M = {
+    cancelled: ['Action annulée.', 'cancelled'],
+    not_granted: ['Cette page n\'a pas reçu l\'autorisation d\'utiliser Claude. Recharge la page et accepte la demande pour jouer.', 'denied'],
+    sampling_disabled: ['Claude n\'est pas disponible pour ce compte dans cette page.', 'denied'],
+    not_declared: ['Cette page n\'est plus reliée à Claude.', 'denied'],
+    capability_disabled: ['Claude est indisponible dans cette vue.', 'denied'],
+    capability_removed: ['Claude est indisponible dans cette vue. Mets à jour ton application.', 'denied'],
+    rate_limited: ['Limite d\'utilisation de Claude atteinte pour le moment. Patiente un peu avant de réessayer.', 'rate'],
+    session_expired: ['Ta session Claude a expiré. Reconnecte-toi, puis réessaie.', 'auth-host'],
+    refused: ['Le narrateur a décliné cette demande.', 'refusal'],
+    prompt_too_large: ['L\'histoire est devenue trop longue pour le narrateur. Réessaie : la chronique va la condenser.', 'bad'],
+    empty_completion: ['Le narrateur est resté muet. Réessaie, ou reformule ton action.', 'server'],
+    invalid_request: ['Requête refusée : ' + ((e && e.message) || ''), 'bad']
+  };
+  const m = M[code] || ['Le lien avec le narrateur a été interrompu. Réessaie.', 'server'];
+  return new ApiError(m[0], m[1]);
+}
+async function callSample(opt) {
+  const input = sampleInput(opt);
+  const options = { model: MODEL, modelTier: 'default', effort: EFFORT, cache: false };
+  if (opt.signal) options.signal = opt.signal;
+  if (opt.onText) options.onText = u => { try { opt.onText(u.text); } catch (e) {} };
+  DEV.lastReq = { tag: opt.tag, at: Date.now(), via: 'claude.use("sample")', model: MODEL, effort: EFFORT, input };
+  let res;
+  try { res = await SAMPLE(input, options); }
+  catch (e) { DEV.lastRes = { tag: opt.tag, error: e && e.code, message: e && e.message }; throw mapSampleError(e); }
+  for (const t of [DEV.total, G && G.usage]) if (t) t.calls = (t.calls || 0) + 1;
+  const text = String((res && res.text) || '');
+  DEV.lastRes = { tag: opt.tag, modelApplied: (res && res.modelApplied) || '(palier ' + (res && res.modelTierApplied) + ')', truncated: !!(res && res.truncated), text };
+  if (!opt.schema) return { text, usage: {} };
+  const data = parseLooseJSON(text);
+  if (!data) throw new ApiError(res && res.truncated ? 'La réponse du narrateur a été tronquée.' : 'Réponse illisible du narrateur.', 'server');
+  return { data, text, usage: {} };
+}
+
 // Extrait, pendant le streaming, la valeur (partielle) d'un champ texte de premier niveau d'un JSON incomplet.
 function partialField(buf, key) {
   let i = 0, depth = 0, inStr = false, strStart = 0, lastStr = null, pendingKey = null;
@@ -677,10 +769,13 @@ async function callOnce(opt) {
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 150000);
+  const stopped = () => !!(opt.signal && opt.signal.aborted);
+  if (opt.signal) { if (opt.signal.aborted) ctl.abort(); else opt.signal.addEventListener('abort', () => ctl.abort(), { once: true }); }
   try {
     let resp;
     try { resp = await fetch(API_URL, { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal }); }
     catch (e) {
+      if (stopped()) throw new ApiError('Action annulée.', 'cancelled');
       throw new ApiError(ctl.signal.aborted ? 'Le narrateur met trop de temps à répondre.' : 'Impossible de joindre l\'API Claude. Vérifie ta connexion Internet.', 'network');
     }
     if (!resp.ok) {
@@ -703,6 +798,7 @@ async function callOnce(opt) {
       }
     } catch (e) {
       if (e instanceof ApiError) throw e;
+      if (stopped()) throw new ApiError('Action annulée.', 'cancelled');
       throw new ApiError(ctl.signal.aborted ? 'Le narrateur met trop de temps à répondre.' : 'La connexion a été coupée pendant la réponse.', 'network');
     }
     const u = acc.usage;
@@ -711,13 +807,8 @@ async function callOnce(opt) {
     DEV.lastRes = { tag: opt.tag, stop: acc.stop, model: acc.model, usage: u, text };
     if (acc.stop === 'refusal') throw new ApiError('Le narrateur a décliné cette demande.', 'refusal');
     if (!opt.schema) return { text, usage: u };
-    let data = null;
-    try { data = JSON.parse(text); }
-    catch (e) {
-      const a = text.indexOf('{'), b = text.lastIndexOf('}');
-      if (a >= 0 && b > a) { try { data = JSON.parse(text.slice(a, b + 1)); } catch (e2) {} }
-    }
-    if (!data || typeof data !== 'object') {
+    const data = parseLooseJSON(text);
+    if (!data) {
       throw new ApiError(acc.stop === 'max_tokens' ? 'La réponse du narrateur a été tronquée.' : 'Réponse illisible du narrateur.', 'server');
     }
     return { data, text, usage: u };
@@ -725,6 +816,9 @@ async function callOnce(opt) {
 }
 
 async function callClaude(opt) {
+  if (HAS_HOST && !SAMPLE) await sampleReady;
+  // Narrateur intégré : une seule tentative, c'est le joueur qui relance.
+  if (SAMPLE) return callSample(opt);
   if (!S.apiKey) throw new ApiError('Aucune clé API enregistrée.', 'nokey');
   let last;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -937,7 +1031,7 @@ const SpriteQ = {
   q: [], active: 0, max: 2,
   add(job) { this.q.push(job); this.pump(); },
   pump() {
-    while (this.active < this.max && this.q.length) {
+    while (this.active < (SAMPLE ? 1 : this.max) && this.q.length) {
       const job = this.q.shift(); this.active++;
       job().catch(() => {}).then(() => { this.active--; this.pump(); });
     }
@@ -955,7 +1049,7 @@ async function genSprite(kind, o) {
 function queueSprite(kind, id) {
   const o = spriteTarget(kind, id);
   if (!o) return;
-  if (!S.apiKey) { o.ss = 'fail'; return; }
+  if (!canNarrate()) { o.ss = 'fail'; return; }
   o.ss = 'pending';
   const gid = G.id;
   SpriteQ.add(async () => {
@@ -971,7 +1065,7 @@ function queueSprite(kind, id) {
   });
 }
 function requeueSprites() {
-  if (!G || !S.apiKey) return;
+  if (!G || !canNarrate()) return;
   if (!G.hero.sprite && G.hero.ss !== 'fail') queueSprite('portrait', 'hero');
   G.items.forEach(i => { if (!i.sprite && i.ss !== 'fail') queueSprite('objet', i.id); });
   G.spells.forEach(s => { if (!s.sprite && s.ss !== 'fail') queueSprite('sort', s.id); });
@@ -1266,12 +1360,14 @@ const Dice = {
 };
 
 // ---------------------------------------------------------------- moteur de tour
+let turnCtl = null;
 async function requestTurn(p) {
+  const ctl = turnCtl = new AbortController();
   showThinking(true);
   let live = null;
   try {
     const res = await callClaude({
-      system: sysPrompt(), messages: buildMessages(p), schema: TURN_SCHEMA, maxTokens: 6000, tag: p.intro ? 'intro' : (p.roll ? 'issue' : 'tour'),
+      system: sysPrompt(), messages: buildMessages(p), schema: TURN_SCHEMA, maxTokens: 6000, tag: p.intro ? 'intro' : (p.roll ? 'issue' : 'tour'), signal: ctl.signal,
       onText: full => {
         const t = partialField(full, 'narrative');
         if (!t) return;
@@ -1281,7 +1377,7 @@ async function requestTurn(p) {
       }
     });
     return res.data;
-  } finally { showThinking(false); if (live) live.remove(); }
+  } finally { if (turnCtl === ctl) turnCtl = null; showThinking(false); if (live) live.remove(); }
 }
 
 async function resolveTurn(p) {
@@ -1462,7 +1558,7 @@ function takeSnap() { try { prevSnap = JSON.stringify(G); store.set('vf_prev', G
 async function act(text) {
   text = cleanText(text, 1200);
   if (!text || busy || !G || G.dead) return;
-  if (!S.apiKey) { openKeyModal(); return; }
+  if (!canNarrate()) { needNarrator(() => act(text)); return; }
   Snd.init();
   takeSnap();
   const p = { action: text, roll: null, setup: '', notes: G.notes, logMark: G.log.length };
@@ -1475,7 +1571,10 @@ async function runTurn(p) {
   pending = p; setBusy(true);
   let outcome = 'error';
   try { outcome = await resolveTurn(p); }
-  catch (e) { showTurnError(e, p); }
+  catch (e) {
+    if (e && e.kind === 'cancelled' && !p.intro) { pending = p; dropPending(true); outcome = 'cancel-done'; }
+    else showTurnError(e, p);
+  }
   if (outcome === 'cancel') cancelTurn(p, true);
   if (outcome !== 'error') pending = null;
   setBusy(false);
@@ -1491,7 +1590,7 @@ function cancelTurn(p, restoreInput) {
   renderAll();
 }
 async function startIntro() {
-  if (!S.apiKey) { openKeyModal(() => startIntro()); return; }
+  if (!canNarrate()) { needNarrator(() => startIntro()); return; }
   await runTurn({ intro: true, roll: null, setup: '', notes: [], logMark: 0 });
 }
 function undoTurn() {
@@ -1540,7 +1639,7 @@ function openKeyModal(after) {
   const status = el('div', { class: 'hint', style: 'margin-top:8px;min-height:18px' });
   const m = Modal.open({
     title: 'Clé API Anthropic',
-    body: [el('p', { class: 'm-text', text: 'Le narrateur est Claude Sonnet 5.5 (effort « low »). Pour jouer, colle ta clé API Anthropic : tu la crées sur platform.claude.com, rubrique « API keys ». Elle reste sur cet appareil et n\'est envoyée qu\'à api.anthropic.com.' }), inp, status],
+    body: [el('p', { class: 'm-text', text: 'Le narrateur est Claude Sonnet 5.5 (effort « ' + EFFORT + ' »). Pour jouer, colle ta clé API Anthropic : tu la crées sur platform.claude.com, rubrique « API keys ». Elle reste sur cet appareil et n\'est envoyée qu\'à api.anthropic.com.' }), inp, status],
     actions: [{ label: 'Plus tard', cls: 'ghost' }, {
       label: 'Enregistrer', cls: 'primary', keep: true, fn: async () => {
         const k = inp.value.trim();
@@ -1619,8 +1718,10 @@ let thinkEl = null;
 const THINK_LINES = ['Le Maître du Jeu réfléchit…', 'Le destin hésite…', 'Le monde retient son souffle…', 'Le narrateur consulte ses notes…', 'Quelque part, un dé roule…'];
 function showThinking(on, label) {
   if (on) {
-    if (!thinkEl) thinkEl = el('div', { class: 'e-think' }, dieSVG('', 'die'), el('span'));
-    thinkEl.lastChild.textContent = label || pick(THINK_LINES);
+    if (thinkEl) thinkEl.remove();
+    const ctl = label ? null : turnCtl;
+    thinkEl = el('div', { class: 'e-think' }, dieSVG('', 'die'), el('span', { text: label || pick(THINK_LINES) }),
+      ctl ? el('button', { text: 'Arrêter', onclick: () => ctl.abort() }) : null);
     logBox().append(thinkEl); scrollDown(true);
   } else if (thinkEl) thinkEl.remove();
 }
@@ -1766,7 +1867,7 @@ function itemDetail(it) {
 }
 function redraw(kind, id) {
   const o = spriteTarget(kind, id); if (!o) return;
-  if (!S.apiKey) { openKeyModal(); return; }
+  if (!canNarrate()) { needNarrator(); return; }
   o.sprite = null; o.ss = ''; queueSprite(kind, id); renderPanel(); refreshSprite(kind, id);
 }
 function tabHero() {
@@ -1843,13 +1944,14 @@ function buildSettings(inGame, rerender) {
       el('button', { class: 'btn block ghost', text: '← Retour au menu principal', onclick: () => { if (busy) { toast('Attends la fin du tour.'); return; } goTitle(); } }));
   }
   out.push(el('div', { class: 'sec-t', text: 'Narrateur' }));
-  out.push(setRow('Clé API Anthropic', S.apiKey ? 'Enregistrée : ' + S.apiKey.slice(0, 7) + '…' + S.apiKey.slice(-4) : 'Aucune clé — indispensable pour jouer', el('button', { class: 'btn sm', text: S.apiKey ? 'Modifier' : 'Ajouter', onclick: () => openKeyModal(rerender) })));
+  if (HAS_HOST) out.push(setRow('Connexion', SAMPLE ? 'Le narrateur passe par ton compte Claude — aucune clé à saisir' : 'Recherche de Claude…', el('span', { class: 'tag' + (SAMPLE ? ' g' : ''), text: SAMPLE ? 'Relié' : '…' })));
+  else out.push(setRow('Clé API Anthropic', S.apiKey ? 'Enregistrée : ' + S.apiKey.slice(0, 7) + '…' + S.apiKey.slice(-4) : 'Aucune clé — indispensable pour jouer', el('button', { class: 'btn sm', text: S.apiKey ? 'Modifier' : 'Ajouter', onclick: () => openKeyModal(rerender) })));
   const lang = el('select', { class: 'field', style: 'width:auto;min-width:130px', onchange: e => {
     S.narrLang = e.target.value; saveSettings();
     if (G && inGame) { G.lang = S.narrLang; note('Le joueur souhaite désormais que le récit soit écrit en : ' + S.narrLang + '.'); autosave(); }
   } }, ['Français', 'English', 'Español', 'Deutsch', 'Italiano', 'Português'].map(l => el('option', { value: l, text: l, selected: (inGame && G ? G.lang : S.narrLang) === l })));
   out.push(setRow('Langue du récit', 'La langue dans laquelle le narrateur écrit', lang));
-  out.push(setRow('Modèle', 'Claude Sonnet 5.5 · effort « low »', el('span', { class: 'tag', text: MODEL })));
+  out.push(setRow('Modèle', 'Claude Sonnet 5.5 · effort « ' + EFFORT + ' »', el('span', { class: 'tag', text: MODEL })));
   out.push(el('div', { class: 'sec-t', text: 'Confort' }));
   out.push(setRow('Taille du texte', S.textSize + ' px', el('div', { class: 'row' },
     el('button', { class: 'btn sm', text: 'A−', onclick: () => { S.textSize = clamp(S.textSize - 1, 14, 24); saveSettings(); applyTextSize(); rerender(); } }),
@@ -2036,7 +2138,8 @@ function refreshTitle() {
   const auto = store.get('vf_auto'), b = $('#t-continue');
   if (auto && auto.hero) { b.style.display = ''; b.textContent = 'Continuer — ' + auto.hero.name + ' (niv. ' + auto.hero.level + ')'; } else b.style.display = 'none';
   $('#t-new').className = 'btn' + (auto && auto.hero ? '' : ' primary');
-  $('#t-foot').textContent = 'Narrateur : Claude Sonnet 5.5 · effort « low »' + (S.apiKey ? '' : ' — clé API requise') + (store.ok ? '' : ' — ⚠ stockage local indisponible');
+  $('#t-foot').textContent = 'Narrateur : Claude Sonnet 5.5 · effort « ' + EFFORT + ' »' + (HAS_HOST ? ' — via ton compte Claude' : S.apiKey ? '' : ' — clé API requise') + (store.ok ? '' : ' — ⚠ stockage local indisponible');
+  $('#t-set').textContent = HAS_HOST ? 'Réglages' : 'Réglages & clé API';
 }
 function goTitle() {
   saveNow();
@@ -2103,7 +2206,7 @@ function beginAdventure() {
     queueSprite('portrait', 'hero');
     startIntro();
   };
-  if (!S.apiKey) openKeyModal(start); else start();
+  needNarrator(start);
 }
 
 // ---------------------------------------------------------------- démarrage
@@ -2135,7 +2238,16 @@ function init() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
   refreshTitle();
 }
-init();
+// Démarrage. Dans Claude, la page peut être mise à jour pendant qu'on joue : on reprend alors la partie en cours.
+function boot(data) {
+  init();
+  if (data && data.g) { try { loadState(JSON.parse(data.g)); } catch (e) {} }
+}
+(function () {
+  const hot = window.claude && window.claude.hot;
+  try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => (G && G.hist.length && !busy ? { g: JSON.stringify(G) } : {})); } catch (e) {}
+  if (hot && typeof hot.ready === 'function') hot.ready(boot); else boot((hot && hot.data) || {});
+})();
 </script>
 </body>
 </html>

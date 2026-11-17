@@ -32,6 +32,7 @@ Tout le jeu tient dans un seul fichier : **`vingt-faces.html`**.
 
 ## Technique
 
-- Modèle : `claude-sonnet-5-5`, effort `low`, appelé directement depuis la page (pas de serveur).
+- Modèle : `claude-sonnet-5-5`. Ouverte ailleurs que dans Claude, la page appelle l'API avec ta clé (effort `low`).
+  Publiée comme artifact dans Claude, elle passe par ton compte Claude, sans clé (effort `medium`).
 - Sorties structurées (JSON) pour l'arbitrage, streaming pour le récit, cache de prompt pour le coût.
 - Aucune dépendance, aucun fichier externe.
