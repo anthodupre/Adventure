@@ -41,8 +41,13 @@ de l'encoche et de la barre d'accueil sont respectées.
 - **Inventaire réel** en 14 catégories, 5 raretés, filtres, tri, recherche, et 6 emplacements d'équipement.
 - **Pouvoirs limités** : coût en énergie, pouvoirs improvisés plus chers, surcharge payée en points de vie.
 - **Combat** : bandeau des adversaires avec leurs points de vie.
-- **Monde** : quêtes, personnages rencontrés (avec portraits et attitude), factions et réputation,
-  carte des lieux visités qui se dessine toute seule, chronique, notes personnelles.
+- **Carte qui se dessine en explorant** : une carte générale découpée en zones (régions, quartiers, îles…) et un plan
+  de chaque zone avec ses lieux. Chaque zone et chaque lieu découverts deviennent une tuile vue du dessus, dessinée
+  sur le moment par Haiku dans le style du monde ; le reste est dans le brouillard. Ton portrait marque ta position.
+  Touche une zone ou un lieu connu pour y voyager, ou une case « ? » pour explorer dans cette direction.
+  Toucher le nom du lieu en haut de l'écran ouvre le plan.
+- **Monde** : quêtes, personnages rencontrés (avec portraits et attitude), factions et réputation, chronique,
+  notes personnelles.
 - **Progression** : niveaux, points de caractéristique, nouvelles compétences, 18 succès, Panthéon des héros tombés.
 - **Lecture** : thèmes Nuit / Parchemin / Contraste / Auto, trois polices de récit, taille et interligne réglables.
   Dans Claude : lecture à voix haute et dictée quand l'appareil le permet.

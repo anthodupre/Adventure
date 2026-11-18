@@ -421,15 +421,29 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 .fac .meter::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)}
 .fac .meter i{position:absolute;top:0;bottom:0}
 .fac small{display:block;font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.4}
-.mapbox{border:1px solid var(--line);border-radius:var(--rad);background:var(--bg2);overflow:hidden}
-.mapbox svg{display:block;width:100%;height:auto;max-height:62vh;touch-action:manipulation}
-.mapbox .edge{stroke:var(--line2);stroke-width:2;stroke-dasharray:4 4}
-.mapbox .node{fill:var(--bg4);stroke:var(--dim);stroke-width:2;cursor:pointer}
-.mapbox .node.cur{fill:var(--torch);stroke:var(--strong)}
-.mapbox .node.sel{stroke:var(--torch);stroke-width:3}
-.mapbox .halo{fill:none;stroke:var(--torch);stroke-width:2;opacity:.5;animation:halo 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center}
-@keyframes halo{from{transform:scale(.6);opacity:.8}to{transform:scale(1.6);opacity:0}}
-.mapbox text{font-family:var(--f-ui);font-size:11px;font-weight:700;fill:var(--ink2);paint-order:stroke;stroke:var(--bg2);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.mapbox{position:relative;border:1px solid var(--line);border-radius:var(--rad);background:var(--bg);overflow:hidden}
+.mapwrap{overflow:auto;max-height:min(58vh,480px);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px}
+.mgrid{position:relative;margin:0 auto}
+.mroads{position:absolute;left:0;top:0;pointer-events:none}
+.mroads line{stroke:var(--torch);stroke-width:4;stroke-linecap:round;stroke-dasharray:3 7;opacity:.9}
+.mcell{position:absolute;padding:6px 0 0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:5px}
+.mtile{position:relative;width:68px;height:68px;flex:none;border-radius:7px;overflow:hidden;background:var(--bg3);box-shadow:0 2px 0 var(--shade)}
+.mtile>img.px,.mtile>.spr-pend{width:100%!important;height:100%!important;border-radius:0}
+.mname{max-width:82px;padding:0 4px;border-radius:4px;background:var(--bg);font-size:11.5px;font-weight:700;line-height:1.2;color:var(--ink2);text-align:center;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mcell.cur .mtile{box-shadow:0 0 0 3px var(--torch),0 0 18px color-mix(in srgb,var(--torch) 55%,transparent)}
+.mcell.cur .mname{color:var(--torch)}
+.mcell.sel .mtile{box-shadow:0 0 0 3px var(--strong)}
+.mcell.sel .mname{color:var(--strong)}
+.mtile .me{position:absolute;top:3px;right:3px;width:28px;height:28px;border-radius:50%;background:var(--torch);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2px var(--bg);animation:bob 1.4s ease-in-out infinite}
+.mtile .me img.px,.mtile .me .spr-pend{width:22px!important;height:22px!important;border-radius:50%}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.mfog{display:flex;align-items:center;justify-content:center;width:68px;height:68px;border:1px dashed var(--line2);border-radius:7px;color:var(--faint);font-family:var(--f-pix);font-size:30px;
+  background:repeating-linear-gradient(45deg,var(--bg2) 0 7px,var(--bg) 7px 14px)}
+.mcell:active .mfog{border-color:var(--torch);color:var(--torch)}
+.compass{position:absolute;top:8px;right:8px;z-index:5;font-family:var(--f-pix);font-size:17px;color:var(--ink2);background:var(--bg2);border:1px solid var(--line2);border-radius:8px;padding:1px 8px;pointer-events:none}
+.hud-loc{cursor:pointer}
 .placecard{margin-top:10px;padding:12px;border-radius:var(--rad);border:1px solid var(--line2);background:var(--bg2)}
 .chron{font-family:var(--f-read);font-size:16px;line-height:1.65;color:var(--ink);white-space:pre-wrap}
 .stats4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -533,6 +547,7 @@ html.kb #choices{padding-bottom:6px}
 @media (max-width:359px){ .hb span{display:none} .hb{height:40px} .hud-bars{gap:6px} }
 @media (prefers-reduced-motion:reduce){ *{animation-duration:.01s!important;animation-iteration-count:1!important;transition-duration:.01s!important} }
 @media (hover:hover){
+.mcell:hover .mfog{border-color:var(--torch);color:var(--torch)}
 .btn:hover{border-color:var(--faint)}
 .btn.primary:hover{background:var(--torch2)}
 .btn.ghost:hover{border-color:var(--line2)}
@@ -1389,7 +1404,9 @@ const TURN_SCHEMA = sObj({
   npcs: sArr(sObj({ name: T_STR, kind: sEnum(['personne', 'creature']), attitude: sEnum(Object.keys(ATT)), alive: T_BOOL, description: T_STR, note: T_STR })),
   factions: sArr(sObj({ name: T_STR, change: T_INT, note: T_STR })),
   foes: sArr(sObj({ name: T_STR, hp: T_INT, hp_max: T_INT, note: T_STR })),
-  location: T_STR, time_of_day: T_STR,
+  location: T_STR, zone: T_STR,
+  direction: sEnum(['aucune', 'nord', 'nord_est', 'est', 'sud_est', 'sud', 'sud_ouest', 'ouest', 'nord_ouest']),
+  zone_look: T_STR, place_look: T_STR, time_of_day: T_STR,
   rest: sEnum(['aucun', 'court', 'long']),
   mood: sEnum(MOODS),
   choices: sArr(T_STR),
@@ -1475,14 +1492,14 @@ function newGameState(C) {
   return {
     v: 2, id: uid(), created: Date.now(), saved: Date.now(), slot: 0, turn: 0,
     world, start: { id: st.id, text: st.id === 'custom' ? cleanText(C.startText, 600) : st.text }, diff: C.diff, lang: S.narrLang, hero: H,
-    location: '', time: '', mood: 'calme', places: [], edges: [], statuses: [], items: [], spells: [], quests: [], npcs: [], factions: [], foes: [],
+    location: '', time: '', mood: 'calme', zones: [], places: [], zoneEdges: [], placeEdges: [], zoneId: '', placeId: '', statuses: [], items: [], spells: [], quests: [], npcs: [], factions: [], foes: [],
     log: [], hist: [], summary: '', choices: [], notes: [], memo: '', ach: {}, stats: { rolls: 0, crit: 0, fumble: 0, ok: 0, dmg: 0 },
     dead: false, ended: false, usage: {}
   };
 }
 // Complète une sauvegarde ancienne ou importée avec ce qui lui manque.
 function migrate(g) {
-  const d = { turn: 0, location: '', time: '', mood: 'calme', places: [], edges: [], statuses: [], items: [], spells: [], quests: [], npcs: [], factions: [], foes: [],
+  const d = { turn: 0, location: '', time: '', mood: 'calme', zones: [], places: [], zoneEdges: [], placeEdges: [], zoneId: '', placeId: '', statuses: [], items: [], spells: [], quests: [], npcs: [], factions: [], foes: [],
     log: [], hist: [], summary: '', choices: [], notes: [], memo: '', ach: {}, dead: false, ended: false, diff: 'normal', lang: 'Français', slot: 0, usage: {} };
   for (const k in d) if (g[k] == null) g[k] = d[k];
   if (!g.stats || typeof g.stats.rolls !== 'number') g.stats = { rolls: 0, crit: 0, fumble: 0, ok: 0, dmg: 0 };
@@ -1505,14 +1522,28 @@ function migrate(g) {
   if (!H.roleDesc) H.roleDesc = r ? r.desc : '';
   if (H.statPoints == null) H.statPoints = 0;
   if (H.skillPicks == null) H.skillPicks = 0;
-  g.places = g.places.map(p => typeof p === 'string' ? { name: p, visits: 1, first: 0, last: 0 } : p);
+  if (!g.zones.length && g.places.length && g.places.every(p => typeof p === 'string' || p.zoneId == null)) {
+    // Ancienne sauvegarde : chaque lieu devient une zone, posée sur la grille dans l'ordre de découverte.
+    const old = g.places.map(p => typeof p === 'string' ? { name: p, visits: 1, first: 0, last: 0 } : p);
+    g.places = []; g.zones = [];
+    old.forEach((p, i) => {
+      const [x, y] = i ? freeCell(g.zones, g.zones[i - 1].x, g.zones[i - 1].y, '') : [0, 0];
+      const z = { id: uid(), name: p.name, x, y, look: '', visits: p.visits || 1, first: p.first || 0, sprite: null, ss: '' };
+      g.zones.push(z);
+      g.places.push({ id: uid(), name: p.name, zoneId: z.id, x: 0, y: 0, look: '', visits: p.visits || 1, first: p.first || 0, last: p.last || 0, sprite: null, ss: '' });
+      if (i) g.zoneEdges.push([g.zones[i - 1].id, z.id]);
+    });
+    const cur = g.places.find(p => norm(p.name) === norm(g.location)) || g.places[g.places.length - 1];
+    if (cur) { g.placeId = cur.id; g.zoneId = cur.zoneId; }
+  }
+  delete g.edges;
   g.items.forEach(i => {
     if (!i.id) i.id = uid();
     if (!TYPES[i.type]) i.type = 'divers';
     if (!RARITY[i.rarity]) i.rarity = 'commun';
     if (i.eq && !TYPES[i.type].slot) i.eq = false;
   });
-  for (const o of [H].concat(g.items, g.spells, g.npcs)) { if (!o.id) o.id = uid(); if (o.ss === 'pending') o.ss = ''; o.tries = 0; }
+  for (const o of [H].concat(g.items, g.spells, g.npcs, g.zones, g.places)) { if (!o.id) o.id = uid(); if (o.ss === 'pending') o.ss = ''; o.tries = 0; }
   H.id = 'hero';
   return g;
 }
@@ -1618,20 +1649,55 @@ function changeFaction(a) {
   if (a.note) f.note = cleanText(a.note, 200);
   return { f, ch };
 }
-function visit(loc) {
-  const key = norm(loc);
-  if (!key) return false;
-  const prev = G.location ? G.places.find(x => norm(x.name) === norm(G.location)) : null;
-  let p = G.places.find(x => norm(x.name) === key);
-  if (prev && p === prev) { G.location = loc; return false; }
-  if (!p) { p = { name: loc, visits: 0, first: G.turn, last: G.turn }; G.places.push(p); if (G.places.length > 60) G.places.shift(); }
-  p.visits++; p.last = G.turn;
-  if (prev) {
-    const a = norm(prev.name);
-    if (a !== key && !G.edges.some(e => (e[0] === a && e[1] === key) || (e[0] === key && e[1] === a))) G.edges.push([a, key]);
-  }
-  G.location = loc;
-  return true;
+// ---------------------------------------------------------------- la carte : zones (carte générale) et lieux (plan de chaque zone)
+// x croît vers l'est, y vers le sud. Chaque nouvelle zone ou nouveau lieu se pose dans la direction indiquée par le narrateur.
+const DIRS = { nord: [0, -1], nord_est: [1, -1], est: [1, 0], sud_est: [1, 1], sud: [0, 1], sud_ouest: [-1, 1], ouest: [-1, 0], nord_ouest: [-1, -1] };
+const curZone = () => (G && G.zones.find(z => z.id === G.zoneId)) || null;
+const curPlace = () => (G && G.places.find(p => p.id === G.placeId)) || null;
+function freeCell(list, x, y, dir) {
+  const taken = (cx, cy) => list.some(c => c.x === cx && c.y === cy);
+  if (DIRS[dir]) { const [dx, dy] = DIRS[dir]; for (let k = 1; k < 10; k++) if (!taken(x + dx * k, y + dy * k)) return [x + dx * k, y + dy * k]; }
+  const order = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]];
+  for (let r = 1; r < 20; r++) for (const [dx, dy] of order) if (!taken(x + dx * r, y + dy * r)) return [x + dx * r, y + dy * r];
+  return [x + 20, y];
+}
+function linkCells(edges, a, b) { if (a && b && a !== b && !edges.some(e => (e[0] === a && e[1] === b) || (e[0] === b && e[1] === a))) edges.push([a, b]); }
+function dirWord(dx, dy) {
+  if (!dx && !dy) return 'ici';
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  const ns = dy < 0 ? 'nord' : 'sud', ew = dx > 0 ? 'est' : 'ouest';
+  if (ax > ay * 2) return 'l\'' + ew;
+  if (ay > ax * 2) return 'le ' + ns;
+  return 'le ' + ns + '-' + ew;
+}
+function travel(o) {
+  const locName = cleanText(o.location, 70), prevZone = curZone(), prevPlace = curPlace();
+  const zoneName = cleanText(o.zone, 70) || (prevZone ? prevZone.name : locName);
+  if (!zoneName) return null;
+  const dir = DIRS[o.direction] ? o.direction : '';
+  let z = findIn(G.zones, zoneName), newZone = false;
+  if (!z) {
+    const [x, y] = prevZone ? freeCell(G.zones, prevZone.x, prevZone.y, dir) : [0, 0];
+    z = { id: uid(), name: zoneName, x, y, look: cleanText(o.zone_look, 300), visits: 0, first: G.turn, sprite: null, ss: '' };
+    G.zones.push(z); newZone = true;
+    queueSprite('zone', z.id, 1);
+  } else if (!z.look && o.zone_look) z.look = cleanText(o.zone_look, 300);
+  const zoneChanged = !prevZone || prevZone.id !== z.id;
+  if (zoneChanged) { z.visits++; linkCells(G.zoneEdges, prevZone && prevZone.id, z.id); }
+  G.zoneId = z.id;
+  const pname = locName || z.name, inZone = G.places.filter(q => q.zoneId === z.id);
+  let p = findIn(inZone, pname), newPlace = false;
+  if (!p) {
+    const from = !zoneChanged && prevPlace && prevPlace.zoneId === z.id ? prevPlace : null;
+    const [x, y] = from ? freeCell(inZone, from.x, from.y, dir) : inZone.length ? freeCell(inZone, 0, 0, dir) : [0, 0];
+    p = { id: uid(), name: pname, zoneId: z.id, x, y, look: cleanText(o.place_look, 300), visits: 0, first: G.turn, last: G.turn, sprite: null, ss: '' };
+    G.places.push(p); newPlace = true;
+    queueSprite('lieu', p.id, 1);
+  } else if (!p.look && o.place_look) p.look = cleanText(o.place_look, 300);
+  const placeChanged = !prevPlace || prevPlace.id !== p.id;
+  if (placeChanged) { p.visits++; p.last = G.turn; if (!zoneChanged) linkCells(G.placeEdges, prevPlace && prevPlace.id, p.id); }
+  G.placeId = p.id; G.location = p.name;
+  return { zone: z, place: p, newZone, newPlace, zoneChanged, placeChanged };
 }
 
 // ---------------------------------------------------------------- succès
@@ -1740,7 +1806,14 @@ Ce qui est consommé, donné, vendu, perdu ou brisé sort par items_remove, avec
 - rest : « court » (une pause d'une heure à l'abri : le programme rend un peu de PV et d'énergie) ou « long » (une vraie nuit en sécurité : tout est restauré). Ne double pas ce soin dans hp_change.
 - statuses_add / statuses_remove : états durables en un ou deux mots (Empoisonné, Béni, Recherché…).
 - quests : crée une entrée quand un objectif apparaît, puis mets-la à jour (même title) quand elle avance, se termine ou échoue.
-- location et time_of_day : toujours renseignés avec le lieu précis et le moment actuels (quelques mots ; garde exactement le même nom de lieu tant que le héros n'en change pas).
+- Carte : le programme dessine une carte qui se révèle au fil de l'exploration. Renseigne toujours :
+  · zone : la grande zone géographique où se trouve le héros (région, quartier, forêt, île, pont d'un vaisseau…), en quelques mots ; garde exactement le même nom tant qu'il y reste, et réutilise le nom exact d'une zone de [ÉTAT] quand il y retourne ;
+  · location : le lieu précis dans cette zone (une taverne, une ruelle, une clairière, une salle…), même règle de nom ;
+  · direction : si le héros vient de changer de zone, la direction de la nouvelle zone par rapport à l'ancienne ; s'il a changé de lieu dans la même zone, la direction du nouveau lieu par rapport au précédent ; sinon « aucune ». Respecte la géographie déjà établie (coordonnées de [ÉTAT] → carte : x vers l'est, y vers le sud) ;
+  · zone_look : seulement pour une zone jamais vue, son aspect vu du ciel en une phrase (terrain, couleurs, constructions, élément marquant) ; sinon vide ;
+  · place_look : seulement pour un lieu jamais vu, son aspect vu de dessus en une phrase (sol, murs, mobilier, végétation, eau…) ; sinon vide.
+  Quand le joueur écrit qu'il voyage vers une zone ou un lieu connu, raconte le trajet (une rencontre ou un jet si c'est risqué) et fais-le arriver. Quand il explore une direction inconnue, invente ce qu'il y découvre.
+- time_of_day : toujours renseigné avec le moment actuel.
 - mood : l'ambiance de la scène.
 - choices : 3 ou 4 pistes brèves (8 mots au plus), variées, dont une audacieuse ou inattendue. Vide quand tu demandes un jet.
 - ending : « mort » seulement si la fiction rend la mort certaine et définitive ; « fin » si l'histoire atteint une vraie conclusion ; sinon « aucune ».
@@ -1759,7 +1832,7 @@ Donne au héros, de façon cohérente avec son archétype (${H.archName}), son c
 - un peu d'argent par gold_change (entre 8 et 40 ${T.coin}) ;
 - les personnages présentés, par npcs ;
 - une première accroche par quests ;
-- location, time_of_day, mood et 3 ou 4 choices.`;
+- zone, location, zone_look, place_look, time_of_day, mood et 3 ou 4 choices (direction « aucune »).`;
 }
 function artSystem() {
   const W = G.world;
@@ -1782,6 +1855,9 @@ Réponds par un objet JSON : {"sprites":[{"id":"1","palette":[{"key":"a","hex":"
 - fond transparent, ni texte ni cadre ; les objets longs se dessinent en diagonale ;
 - portraits : buste de face ou de trois quarts, visage bien lisible, expression marquée, tenue typique du monde ;
 - créatures : la silhouette entière ou la tête, avec leur trait le plus distinctif.
+
+# Tuiles de carte (zones et lieux)
+Elles s'assemblent en grille pour former une carte : vue de dessus, le décor remplit toute la case jusqu'aux bords (sol, eau, routes, toits, végétation, mobilier), aucun pixel transparent et pas de contour noir autour de la case. Mets un élément marquant au centre si l'endroit en a un. Les couleurs suivent la direction artistique du monde.
 Vérifie que chaque ligne fait bien 16 caractères.`;
 }
 const SUMMARY_SYSTEM = `Tu es l'archiviste d'une partie de jeu de rôle. On te donne la chronique existante (peut-être vide) et la transcription des tours les plus anciens. Réécris une chronique unique et à jour qui permettra au Maître du Jeu de garder la cohérence de l'histoire sans relire ces tours.
@@ -1802,7 +1878,7 @@ function stateForAI() {
   const npcs = G.npcs.slice().sort((a, b) => b.seen - a.seen).slice(0, 25)
     .map(n => n.name + ' (' + (n.kind === 'creature' ? 'créature' : 'personne') + ', ' + ATT[n.att].label.toLowerCase() + (n.alive ? '' : ', mort') + ')');
   const st = {
-    tour: G.turn, lieu: G.location || 'inconnu', moment: G.time || 'inconnu', mode: DIFFS[G.diff].name,
+    tour: G.turn, zone: curZone() ? curZone().name : 'inconnue', lieu: G.location || 'inconnu', moment: G.time || 'inconnu', mode: DIFFS[G.diff].name,
     heros: {
       niveau: H.level, pv: H.hp + '/' + H.hpMax, [T.mana]: S.god ? 'illimité' : H.mana + '/' + H.manaMax,
       [T.coin]: S.god ? 'illimité' : H.gold, modificateurs: mods,
@@ -1812,6 +1888,11 @@ function stateForAI() {
     inventaire: G.items.filter(i => !i.eq).map(itemInfo),
     pouvoirs_connus: G.spells.map(s => s.name + ' (' + s.cost + ' ' + T.mana + ') : ' + s.desc),
     quetes_actives: G.quests.filter(q => q.status === 'active').map(q => q.title + (q.note ? ' — ' + q.note : ''))
+  };
+  const cz = curZone();
+  if (G.zones.length) st.carte = {
+    zones_connues: G.zones.slice(-40).map(z => z.name + ' (' + z.x + ',' + z.y + ')'),
+    lieux_de_la_zone: cz ? G.places.filter(p => p.zoneId === cz.id).map(p => p.name + ' (' + p.x + ',' + p.y + ')') : []
   };
   if (G.foes.length) st.adversaires = G.foes.map(f => f.name + ' : ' + f.hp + '/' + f.hpMax + ' PV' + (f.note ? ' (' + f.note + ')' : ''));
   if (npcs.length) st.personnages_connus = npcs;
@@ -1858,12 +1939,16 @@ function spriteTarget(kind, id) {
   if (kind === 'objet') return G.items.find(i => i.id === id) || null;
   if (kind === 'sort') return G.spells.find(s => s.id === id) || null;
   if (kind === 'pnj') return G.npcs.find(n => n.id === id) || null;
+  if (kind === 'zone') return G.zones.find(z => z.id === id) || null;
+  if (kind === 'lieu') return G.places.find(p => p.id === id) || null;
   return null;
 }
 function fallbackIc(kind, o) {
   if (kind === 'objet') return (o && TYPES[o.type] && TYPES[o.type].ic) || 'box';
   if (kind === 'sort') return 'spark';
   if (kind === 'pnj') return o && o.kind === 'creature' ? 'monster' : 'person';
+  if (kind === 'zone') return 'globe';
+  if (kind === 'lieu') return 'pin';
   return 'person';
 }
 function spriteEl(kind, o, size) {
@@ -1913,6 +1998,8 @@ function subjectLine(kind, o, n) {
   if (kind === 'portrait') return n + '. Portrait du héros — ' + o.name + ', ' + o.archName + '. ' + (o.concept || o.roleDesc || '');
   if (kind === 'objet') return n + '. Objet d\'inventaire — « ' + o.name + ' » (' + TYPES[o.type].one.toLowerCase() + ', ' + RARITY[o.rarity].label.toLowerCase() + ') : ' + (o.desc || 'pas de description');
   if (kind === 'sort') return n + '. Icône de pouvoir (' + T.magic + ') — « ' + o.name + ' » : ' + (o.desc || '');
+  if (kind === 'zone') return n + '. Tuile de carte générale, vue du ciel — zone « ' + o.name + ' » : ' + (o.look || 'à imaginer d\'après son nom et le monde') + '. Remplit les 16×16 pixels, sans transparence ni contour.';
+  if (kind === 'lieu') { const z = G.zones.find(x => x.id === o.zoneId); return n + '. Tuile de plan local, vue de dessus — lieu « ' + o.name + ' »' + (z ? ' (zone « ' + z.name + ' »)' : '') + ' : ' + (o.look || 'à imaginer d\'après son nom') + '. Remplit les 16×16 pixels, sans transparence ni contour.'; }
   return n + '. Portrait ' + (o.kind === 'creature' ? 'de créature' : 'de personnage') + ' — « ' + o.name + ' » (' + ATT[o.att].label.toLowerCase() + ') : ' + (o.desc || o.note || '');
 }
 async function drawBatch(batch) {
@@ -1961,7 +2048,7 @@ async function drawBatch(batch) {
 }
 function requeueSprites() {
   if (!G || !canNarrate()) return;
-  const all = [['portrait', G.hero, 0]].concat(G.items.map(i => ['objet', i, 1]), G.spells.map(s => ['sort', s, 1]), G.npcs.map(n => ['pnj', n, 2]));
+  const all = [['portrait', G.hero, 0]].concat(G.items.map(i => ['objet', i, 1]), G.spells.map(s => ['sort', s, 1]), G.zones.map(z => ['zone', z, 1]), G.places.map(p => ['lieu', p, 1]), G.npcs.map(n => ['pnj', n, 2]));
   for (const [k, o, p] of all) if (!o.sprite) { o.ss = ''; o.tries = 0; queueSprite(k, o.id, p); }
 }
 function redraw(kind, id) {
@@ -2113,8 +2200,13 @@ async function applyOutcome(o, p) {
   const narrative = cleanText(o.narrative, 5000) || '…';
   pushLog({ t: 'narr', text: narrative, first: !!p.intro });
 
-  const loc = cleanText(o.location, 70), tod = cleanText(o.time_of_day, 40);
-  if (loc && visit(loc) && !p.intro) chips.push({ k: 'loc', ic: 'pin', text: loc });
+  const tod = cleanText(o.time_of_day, 40);
+  const mv = travel(o);
+  if (mv) {
+    if (mv.newZone) after.unshift({ t: 'loot', kind: 'zone', id: mv.zone.id, name: mv.zone.name, desc: mv.zone.look });
+    else if (mv.zoneChanged && !p.intro) chips.push({ k: 'loc', ic: 'globe', text: mv.zone.name });
+    if (mv.placeChanged && !p.intro) chips.push({ k: 'loc', ic: 'pin', text: mv.place.name });
+  }
   if (tod) G.time = tod;
   if (MOODS.includes(o.mood)) G.mood = o.mood;
 
@@ -2475,10 +2567,11 @@ function renderEntry(e) {
     case 'loot': {
       const kind = e.kind || 'objet';
       const o = spriteTarget(kind, e.id);
-      const kick = kind === 'sort' ? 'Nouveau pouvoir · ' + e.cost + ' ' + T.mana : kind === 'pnj' ? 'Rencontre' : 'Obtenu';
+      const kick = kind === 'sort' ? 'Nouveau pouvoir · ' + e.cost + ' ' + T.mana : kind === 'pnj' ? 'Rencontre' : kind === 'zone' ? 'Zone découverte' : 'Obtenu';
       return el('button', { class: 'le e-loot', onclick: () => {
         if (kind === 'sort') openPanel('magic');
         else if (kind === 'pnj') { UI.wtab = 'gens'; UI.npc = o ? o.id : null; openPanel('world'); }
+        else if (kind === 'zone') openMap('region', o && o.id);
         else { openPanel('inv'); if (o) { UI.sub = o.id; renderPanel(); } }
       } }, spriteEl(kind, o || { id: e.id, ss: 'fail' }, 40),
         el('div', { class: 'lt' }, el('small', { text: kick }), el('b', { text: e.name + (e.qty > 1 ? ' ×' + e.qty : '') }), e.desc ? el('span', { text: e.desc }) : null));
@@ -2642,7 +2735,8 @@ function openActions() {
 function renderAll() { updateHUD(); renderChoices(); renderPanel(); }
 
 // ---------------------------------------------------------------- panneau à onglets
-const UI = { tab: 'inv', sub: null, filter: 'all', sort: 'recent', q: '', wtab: 'quetes', npc: null, place: null };
+const UI = { tab: 'inv', sub: null, filter: 'all', sort: 'recent', q: '', wtab: 'quetes', npc: null, mapMode: 'lieu', mapZone: null, mapSel: null };
+function openMap(mode, sel) { UI.tab = 'world'; UI.wtab = 'carte'; UI.mapMode = mode || 'lieu'; UI.mapZone = null; UI.mapSel = sel || null; UI.npc = null; openPanel('world'); }
 const isWide = () => { try { return matchMedia('(min-width:1000px)').matches; } catch (e) { return false; } };
 function openPanel(tab) { if (tab) { if (UI.tab !== tab) UI.sub = null; UI.tab = tab; } $('#panel').classList.add('open'); renderPanel(); updateHUD(); }
 function closePanel() { $('#panel').classList.remove('open'); updateHUD(); }
@@ -2799,7 +2893,7 @@ function tabMagic() {
 // --- monde
 function tabWorld() {
   const segs = [['quetes', 'Quêtes'], ['gens', 'Rencontres'], ['carte', 'Carte'], ['recit', 'Chronique'], ['notes', 'Notes']];
-  const out = [el('div', { class: 'seg', style: 'margin-bottom:14px' }, segs.map(([id, l]) => el('button', { class: UI.wtab === id ? 'on' : '', text: l, onclick: () => { UI.wtab = id; UI.npc = null; renderPanel(); } })))];
+  const out = [el('div', { class: 'seg', style: 'margin-bottom:14px' }, segs.map(([id, l]) => el('button', { class: UI.wtab === id ? 'on' : '', text: l, onclick: () => { UI.wtab = id; UI.npc = null; UI.mapSel = null; UI.mapZone = null; renderPanel(); } })))];
   if (UI.wtab === 'quetes') {
     const act = G.quests.filter(q => q.status === 'active'), old = G.quests.filter(q => q.status !== 'active');
     out.push(el('div', { class: 'sec-t', style: 'margin-top:4px', text: 'En cours' }));
@@ -2817,6 +2911,7 @@ function tabWorld() {
     out.push(G.summary ? el('div', { class: 'chron', text: G.summary }) : el('div', { class: 'empty', text: 'La chronique s\'écrira d\'elle-même quand l\'histoire sera assez longue. Tout le récit reste lisible dans le fil.' }));
     out.push(el('div', { class: 'sec-t', text: 'Partie' }),
       el('div', { class: 'kv' }, el('span', { text: 'Tours joués' }), el('span', { text: String(G.turn) })),
+      el('div', { class: 'kv' }, el('span', { text: 'Zones découvertes' }), el('span', { text: String(G.zones.length) })),
       el('div', { class: 'kv' }, el('span', { text: 'Lieux visités' }), el('span', { text: String(G.places.length) })),
       el('div', { class: 'kv' }, el('span', { text: 'Personnages rencontrés' }), el('span', { text: String(G.npcs.length) })),
       el('div', { class: 'kv' }, el('span', { text: 'Dégâts encaissés' }), el('span', { text: String(G.stats.dmg) })));
@@ -2872,58 +2967,96 @@ function npcDetail(n) {
     el('button', { class: 'btn sm ghost block', text: 'Redessiner le portrait', onclick: () => redraw('pnj', n.id) })
   ];
 }
-function mapLayout() {
-  const P = G.places, N = P.length, idx = new Map(P.map((p, i) => [norm(p.name), i]));
-  const E = G.edges.map(e => [idx.get(e[0]), idx.get(e[1])]).filter(e => e[0] != null && e[1] != null);
-  const pos = P.map((p, i) => { const a = i * 2.39996, r = 46 * Math.sqrt(i + 0.5); return [Math.cos(a) * r, Math.sin(a) * r]; });
-  for (let it = 0; it < 280; it++) {
-    const f = pos.map(() => [0, 0]), temp = 10 * (1 - it / 280) + 0.4;
-    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
-      const dx = pos[i][0] - pos[j][0], dy = (pos[i][1] - pos[j][1]) * 1.6, d2 = dx * dx + dy * dy + 0.01, d = Math.sqrt(d2), k = 9000 / d2;
-      f[i][0] += dx / d * k; f[i][1] += dy / d * k; f[j][0] -= dx / d * k; f[j][1] -= dy / d * k;
-    }
-    for (const [a, b] of E) {
-      const dx = pos[b][0] - pos[a][0], dy = pos[b][1] - pos[a][1], d = Math.sqrt(dx * dx + dy * dy) + 0.01, k = (d - 100) * 0.1;
-      f[a][0] += dx / d * k; f[a][1] += dy / d * k; f[b][0] -= dx / d * k; f[b][1] -= dy / d * k;
-    }
-    for (let i = 0; i < N; i++) {
-      f[i][0] -= pos[i][0] * 0.012; f[i][1] -= pos[i][1] * 0.02;
-      const m = Math.hypot(f[i][0], f[i][1]) || 1, step = Math.min(temp, m);
-      pos[i][0] += f[i][0] / m * step; pos[i][1] += f[i][1] / m * step;
-    }
-  }
-  return { pos, E };
+// La carte : une grille de tuiles dessinées par l'IA, révélée case par case ; les cases « ? » sont le brouillard.
+function gridMap(o) {
+  // Chaque case : une tuile carrée et, dessous, le nom du lieu sur deux lignes au plus.
+  const CW = 86, CH = 108, TS = 68, xs = o.items.map(i => i.x), ys = o.items.map(i => i.y);
+  const minX = Math.min(...xs) - 1, maxX = Math.max(...xs) + 1, minY = Math.min(...ys) - 1, maxY = Math.max(...ys) + 1;
+  const W = (maxX - minX + 1) * CW, H = (maxY - minY + 1) * CH;
+  const ox = (x) => (x - minX) * CW + (CW - TS) / 2, oy = (y) => (y - minY) * CH + 6;
+  const at = (x, y) => 'left:' + (x - minX) * CW + 'px;top:' + (y - minY) * CH + 'px;width:' + CW + 'px;height:' + CH + 'px';
+  const grid = el('div', { class: 'mgrid', style: 'width:' + W + 'px;height:' + H + 'px' });
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'mroads'); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('aria-hidden', 'true');
+  const pos = new Map(o.items.map(i => [i.id, [ox(i.x) + TS / 2, oy(i.y) + TS / 2]]));
+  o.edges.forEach(([a, b]) => {
+    if (!pos.has(a) || !pos.has(b)) return;
+    const l = document.createElementNS(NS, 'line');
+    l.setAttribute('x1', pos.get(a)[0]); l.setAttribute('y1', pos.get(a)[1]); l.setAttribute('x2', pos.get(b)[0]); l.setAttribute('y2', pos.get(b)[1]);
+    svg.append(l);
+  });
+  grid.append(svg);
+  const taken = new Set(o.items.map(i => i.x + ',' + i.y)), fog = new Set();
+  o.items.forEach(i => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const k = (i.x + dx) + ',' + (i.y + dy); if (!taken.has(k)) fog.add(k); }));
+  fog.forEach(k => {
+    const [x, y] = k.split(',').map(Number);
+    grid.append(el('button', { class: 'mcell', style: at(x, y), 'aria-label': 'Explorer vers ' + o.fogLabel(x, y), title: 'Inexploré', onclick: () => o.onFog(x, y) },
+      el('span', { class: 'mfog', text: '?' })));
+  });
+  o.items.forEach(i => {
+    const tile = el('span', { class: 'mtile' }, spriteEl(i.kind, i.obj, TS));
+    if (i.id === o.curId) tile.append(el('span', { class: 'me', title: 'Tu es ici' }, spriteEl('portrait', G.hero, 22)));
+    grid.append(el('button', { class: 'mcell' + (i.id === o.curId ? ' cur' : '') + (i.id === o.selId ? ' sel' : ''), style: at(i.x, i.y), 'aria-label': i.name, title: i.name, onclick: () => o.onSel(i.id) },
+      tile, el('span', { class: 'mname', text: i.name })));
+  });
+  const wrap = el('div', { class: 'mapwrap' }, grid);
+  const center = () => {
+    const c = o.items.find(i => i.id === (o.selId || o.curId)) || o.items[0];
+    wrap.scrollLeft = (c.x - minX + 0.5) * CW - wrap.clientWidth / 2;
+    wrap.scrollTop = (c.y - minY + 0.5) * CH - wrap.clientHeight / 2;
+  };
+  setTimeout(center, 0);
+  return el('div', { class: 'mapbox' }, wrap, el('div', { class: 'compass', text: 'N ↑' }));
 }
 function tabMap() {
-  if (!G.places.length) return [el('div', { class: 'empty', text: 'La carte se dessine à mesure que tu voyages.' })];
-  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
-  const { pos, E } = mapLayout();
-  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  pos.forEach(([x, y]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); });
-  const pad = 70, w = Math.max(240, x1 - x0 + pad * 2), h = Math.max(160, y1 - y0 + pad * 1.4);
-  const ox = (x0 + x1) / 2 - w / 2, oy = (y0 + y1) / 2 - h / 2;
-  svg.setAttribute('viewBox', ox + ' ' + oy + ' ' + w + ' ' + h);
-  svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Carte des lieux visités');
-  const mk = (tag, at) => { const n = document.createElementNS(NS, tag); for (const k in at) n.setAttribute(k, at[k]); return n; };
-  E.forEach(([a, b]) => svg.append(mk('line', { class: 'edge', x1: pos[a][0], y1: pos[a][1], x2: pos[b][0], y2: pos[b][1] })));
-  const cur = norm(G.location);
-  G.places.forEach((p, i) => {
-    const [x, y] = pos[i], isCur = norm(p.name) === cur, isSel = UI.place === p.name;
-    if (isCur) svg.append(mk('circle', { class: 'halo', cx: x, cy: y, r: 13 }));
-    const c = mk('circle', { class: 'node' + (isCur ? ' cur' : '') + (isSel ? ' sel' : ''), cx: x, cy: y, r: isCur ? 10 : 7 + Math.min(3, p.visits - 1) });
-    c.addEventListener('click', () => { UI.place = p.name; renderPanel(); });
-    const title = mk('title', {}); title.textContent = p.name; c.append(title);
-    svg.append(c);
-    const t = mk('text', { x, y: y + 24, 'text-anchor': 'middle' });
-    t.textContent = p.name.length > 22 ? p.name.slice(0, 21) + '…' : p.name;
-    svg.append(t);
-  });
-  const out = [el('div', { class: 'mapbox' }, svg)];
-  const sel = G.places.find(p => p.name === UI.place);
-  if (sel) out.push(el('div', { class: 'placecard' }, el('b', { text: sel.name }),
-    el('p', { class: 'hint', text: plural(sel.visits, 'visite') + ' · découvert au tour ' + (sel.first + 1) + (norm(sel.name) === cur ? ' · tu y es' : '') }),
-    norm(sel.name) === cur ? null : el('button', { class: 'btn sm primary', style: 'margin-top:8px', text: 'Y retourner', onclick: () => prefill('Je retourne à : ' + sel.name) })));
-  else out.push(el('p', { class: 'hint', style: 'margin-top:8px', text: 'Touche un lieu pour le détail. Le point doré, c\'est toi.' }));
+  if (!G.zones.length) return [el('div', { class: 'empty', text: 'La carte se dessine à mesure que tu explores.' })];
+  const cz = curZone(), cp = curPlace();
+  if (!UI.mapMode) UI.mapMode = 'lieu';
+  const vz = G.zones.find(z => z.id === UI.mapZone) || cz || G.zones[0];
+  const out = [el('div', { class: 'seg', style: 'margin-bottom:10px' },
+    el('button', { class: UI.mapMode === 'region' ? 'on' : '', text: 'Carte générale', onclick: () => { UI.mapMode = 'region'; UI.mapSel = null; renderPanel(); } }),
+    el('button', { class: UI.mapMode === 'lieu' ? 'on' : '', text: 'Plan · ' + vz.name, onclick: () => { UI.mapMode = 'lieu'; UI.mapSel = null; renderPanel(); } }))];
+  if (UI.mapMode === 'region') {
+    out.push(gridMap({
+      items: G.zones.map(z => ({ id: z.id, x: z.x, y: z.y, name: z.name, kind: 'zone', obj: z })), edges: G.zoneEdges, curId: cz && cz.id, selId: UI.mapSel,
+      onSel: id => { UI.mapSel = id; renderPanel(); },
+      fogLabel: (x, y) => cz ? dirWord(x - cz.x, y - cz.y) : 'l\'inconnu',
+      onFog: (x, y) => { if (!cz) return; actFromPanel('Je quitte ' + cz.name + ' et je pars explorer vers ' + dirWord(x - cz.x, y - cz.y) + ', en terrain inconnu.'); }
+    }));
+    const z = G.zones.find(q => q.id === UI.mapSel);
+    if (z) {
+      const here = cz && z.id === cz.id, n = G.places.filter(p => p.zoneId === z.id).length;
+      out.push(el('div', { class: 'placecard' }, el('div', { class: 'row' }, el('div', { class: 'frame' }, spriteEl('zone', z, 56)),
+        el('div', { class: 'grow' }, el('b', { text: z.name }), el('p', { class: 'hint', text: (here ? 'Tu es ici · ' : '') + plural(z.visits, 'visite') + ' · ' + plural(n, 'lieu', 'lieux') + ' connu' + (n > 1 ? 's' : '') }))),
+        z.look ? el('p', { class: 'hint', style: 'margin-top:8px', text: z.look }) : null,
+        el('div', { class: 'row wrap', style: 'margin-top:10px' },
+          here ? null : el('button', { class: 'btn primary', text: 'Voyager ici', onclick: () => actFromPanel('Je voyage jusqu\'à ' + z.name + '.') }),
+          el('button', { class: 'btn', text: 'Voir le plan', onclick: () => { UI.mapMode = 'lieu'; UI.mapZone = z.id; UI.mapSel = null; renderPanel(); } }))));
+    } else out.push(el('p', { class: 'hint', style: 'margin-top:8px', text: 'Touche une zone pour y voyager, ou une case « ? » pour explorer dans cette direction. Ton portrait marque l\'endroit où tu es.' }));
+    return out;
+  }
+  const places = G.places.filter(p => p.zoneId === vz.id);
+  const inHere = cz && vz.id === cz.id;
+  if (!places.length) { out.push(el('div', { class: 'empty', text: 'Aucun lieu connu dans cette zone.' })); return out; }
+  out.push(gridMap({
+    items: places.map(p => ({ id: p.id, x: p.x, y: p.y, name: p.name, kind: 'lieu', obj: p })), edges: G.placeEdges, curId: inHere && cp ? cp.id : null, selId: UI.mapSel,
+    onSel: id => { UI.mapSel = id; renderPanel(); },
+    fogLabel: (x, y) => { const from = inHere && cp ? cp : places[0]; return dirWord(x - from.x, y - from.y); },
+    onFog: (x, y) => {
+      if (!inHere) { actFromPanel('Je voyage jusqu\'à ' + vz.name + ' pour l\'explorer.'); return; }
+      const from = cp || places[0];
+      actFromPanel('Depuis ' + from.name + ', j\'explore vers ' + dirWord(x - from.x, y - from.y) + ', dans ' + vz.name + '.');
+    }
+  }));
+  const p = places.find(q => q.id === UI.mapSel);
+  if (p) {
+    const here = cp && p.id === cp.id;
+    out.push(el('div', { class: 'placecard' }, el('div', { class: 'row' }, el('div', { class: 'frame' }, spriteEl('lieu', p, 56)),
+      el('div', { class: 'grow' }, el('b', { text: p.name }), el('p', { class: 'hint', text: (here ? 'Tu es ici · ' : '') + plural(p.visits, 'visite') + ' · découvert au tour ' + (p.first + 1) }))),
+      p.look ? el('p', { class: 'hint', style: 'margin-top:8px', text: p.look }) : null,
+      here ? null : el('div', { class: 'row wrap', style: 'margin-top:10px' },
+        el('button', { class: 'btn primary', text: inHere ? 'Y aller' : 'Voyager jusque-là', onclick: () => actFromPanel(inHere ? 'Je vais à ' + p.name + '.' : 'Je voyage jusqu\'à ' + p.name + ', dans ' + vz.name + '.') }))));
+  } else out.push(el('p', { class: 'hint', style: 'margin-top:8px', text: inHere ? 'Le plan de ta zone. Touche un lieu pour t\'y rendre, ou une case « ? » pour explorer.' : 'Le plan de ' + vz.name + '. Touche un lieu pour y voyager.' }));
   return out;
 }
 
@@ -3129,7 +3262,7 @@ function openImport() {
 }
 function loadState(data, quiet) {
   G = migrate(data);
-  pending = null; UI.sub = null; UI.npc = null; UI.place = null; UI.filter = 'all'; UI.q = '';
+  pending = null; UI.sub = null; UI.npc = null; UI.mapSel = null; UI.mapZone = null; UI.filter = 'all'; UI.q = '';
   ART.q = ART.q.filter(j => j.gid === G.id);
   if (!quiet) prevSnap = null;
   show('game');
@@ -3307,7 +3440,7 @@ function beginAdventure() {
   needNarrator(() => {
     Snd.init();
     G = newGameState(C); prevSnap = null; pending = null;
-    Object.assign(UI, { tab: 'inv', sub: null, filter: 'all', q: '', wtab: 'quetes', npc: null, place: null });
+    Object.assign(UI, { tab: 'inv', sub: null, filter: 'all', q: '', wtab: 'quetes', npc: null, mapMode: 'lieu', mapZone: null, mapSel: null });
     show('game'); setBusy(false); renderLog(); renderAll();
     queueSprite('portrait', 'hero', 0);
     startIntro();
@@ -3384,6 +3517,7 @@ function init() {
   $('#b-menu').addEventListener('click', () => { if (!isWide() && $('#panel').classList.contains('open') && UI.tab === 'opts') closePanel(); else openPanel('opts'); });
   $('.p-scrim').addEventListener('click', closePanel);
   $('#hp-bar').addEventListener('click', () => openPanel('hero'));
+  $('.hud-loc').addEventListener('click', () => openMap('lieu'));
   $('#mana-bar').addEventListener('click', () => openPanel('magic'));
   $('#act-btn').addEventListener('click', openActions);
   $('#send').addEventListener('click', sendInput);
