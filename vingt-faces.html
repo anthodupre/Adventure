@@ -615,10 +615,9 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
 // ---------------------------------------------------------------- modèles
 // Publiée comme artifact dans Claude, la page passe par le compte Claude du joueur ; ailleurs, par une clé API.
 const HAS_HOST = !!(window.claude && typeof window.claude.use === 'function');
-const MODEL = 'claude-sonnet-5-5';      // le narrateur
-const EFFORT = 'high';
-const ART_MODEL = 'claude-haiku-5-5';   // l'artiste des sprites
-const ART_EFFORT = 'high';
+const MODEL = 'claude-sonnet-5-5';      // le narrateur (effort réglable dans les options, « high » par défaut)
+const ART_MODEL = 'claude-haiku-5-5';   // l'artiste des sprites : le modèle le plus rapide, sans phase de réflexion (la vitesse prime)
+const EFFORTS = ['low', 'medium', 'high'];
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2026-10-21';
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
@@ -988,8 +987,9 @@ const store = {
   del(k) { delete this.mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
 };
 const S = Object.assign({ apiKey: '', sound: true, textSize: 18, lh: 'normal', font: 'literata', skin: 'nuit', narrLang: 'Français', dev: false, god: false,
-  forceDie: 0, useFallbacks: true, autoVoice: false, voice: 'buttery' }, store.get('vf_settings') || {});
+  forceDie: 0, useFallbacks: true, autoVoice: false, voice: 'buttery', storyEffort: 'high' }, store.get('vf_settings') || {});
 if (S.textSize < 14 || S.textSize > 26) S.textSize = 18;
+if (!EFFORTS.includes(S.storyEffort)) S.storyEffort = 'high';
 function saveSettings() { store.set('vf_settings', S); }
 function applyLook() {
   const b = document.body;
@@ -1209,12 +1209,14 @@ async function callApi(opt) {
   const model = opt.art ? ART_MODEL : MODEL;
   const body = {
     model, max_tokens: opt.maxTokens || 16000, stream: true,
-    output_config: { effort: opt.art ? ART_EFFORT : EFFORT },
+    output_config: { effort: opt.art ? 'low' : S.storyEffort },
     // Le prompt système est stable pendant toute la partie : on le met en cache.
     system: [{ type: 'text', text: opt.system, cache_control: { type: 'ephemeral' } }],
     messages: opt.messages
   };
   if (opt.schema) body.output_config.format = { type: 'json_schema', schema: opt.schema };
+  // L'artiste dessine sans réfléchir d'abord : le premier pixel arrive tout de suite.
+  if (opt.art) body.thinking = { type: 'disabled' };
   const headers = { 'content-type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': API_VERSION, 'anthropic-dangerous-direct-browser-access': 'true' };
   // Repli automatique côté serveur si un filtre de sécurité décline la requête (Sonnet seulement).
   if (S.useFallbacks && model === MODEL) { body.fallbacks = 'default'; headers['anthropic-beta'] = FALLBACK_BETA; }
@@ -1312,8 +1314,8 @@ function mapSampleError(e) {
 async function callSample(opt) {
   const input = sampleInput(opt);
   const options = opt.art
-    ? { model: ART_MODEL, modelTier: 'quick', effort: ART_EFFORT, cache: false }
-    : { model: MODEL, modelTier: 'default', effort: EFFORT, cache: false };
+    ? { model: ART_MODEL, modelTier: 'quick', effort: 'low', cache: false }
+    : { model: MODEL, modelTier: 'default', effort: S.storyEffort, cache: false };
   if (opt.signal) options.signal = opt.signal;
   if (opt.onText) options.onText = u => { try { opt.onText(u.text); } catch (e) {} };
   const req = { tag: opt.tag, at: Date.now(), via: 'claude.use("sample")', model: options.model, effort: options.effort, input };
@@ -1827,7 +1829,8 @@ function buildMessages(p) {
 }
 
 // ---------------------------------------------------------------- sprites : dessinés sur le moment par l'IA, par petits lots
-const ART = { q: [], active: 0 };
+// Dans Claude, une page n'a que deux appels simultanés : le récit passe toujours en premier.
+const ART = { q: [], active: 0, ctls: new Set(), running: new Set(), pausedUntil: 0, timer: 0 };
 function spriteTarget(kind, id) {
   if (!G) return null;
   if (kind === 'portrait') return G.hero;
@@ -1864,14 +1867,26 @@ function queueSprite(kind, id, prio) {
   setTimeout(pumpArt, 0);
 }
 function pumpArt() {
-  const max = SAMPLE ? (busy ? 1 : 2) : 3;
+  const wait = ART.pausedUntil - Date.now();
+  if (wait > 0) { clearTimeout(ART.timer); ART.timer = setTimeout(pumpArt, wait + 50); return; }
+  const max = SAMPLE ? (busy ? 0 : 2) : 3;
   while (ART.active < max && ART.q.length) {
     ART.q.sort((a, b) => a.prio - b.prio);
-    const batch = ART.q.splice(0, 3);
+    const batch = ART.q.splice(0, 1);
     ART.active++;
-    drawBatch(batch).catch(() => {}).then(() => { ART.active--; pumpArt(); });
+    const run = drawBatch(batch).catch(() => {}).then(() => { ART.active--; ART.running.delete(run); pumpArt(); renderArtStatus(); });
+    ART.running.add(run);
   }
+  renderArtStatus();
 }
+// Le joueur agit : on interrompt le dessin en cours (il reprendra après le tour) pour libérer la place du récit.
+// On attend (au plus 1,5 s) que le dessin interrompu ait rendu sa place avant d'envoyer le tour.
+function yieldArtToStory() {
+  if (!SAMPLE || !ART.running.size) return Promise.resolve();
+  ART.ctls.forEach(c => c.abort());
+  return Promise.race([Promise.allSettled(Array.from(ART.running)), sleep(1500)]);
+}
+const artPending = () => ART.q.length + ART.active;
 function subjectLine(kind, o, n) {
   const T = G.world.terms;
   if (kind === 'portrait') return n + '. Portrait du héros — ' + o.name + ', ' + o.archName + '. ' + (o.concept || o.roleDesc || '');
@@ -1897,19 +1912,30 @@ async function drawBatch(batch) {
     autosave();
   };
   const user = (subs.length > 1 ? 'Dessine ces ' + subs.length + ' icônes :\n' : 'Dessine cette icône :\n') + subs.map(s => subjectLine(s.j.kind, spriteTarget(s.j.kind, s.j.id), s.n)).join('\n');
+  const ctl = new AbortController();
+  ART.ctls.add(ctl);
+  let err = null;
   try {
-    const res = await callClaude({ art: true, system: artSystem(), messages: [{ role: 'user', content: user }], schema: SPRITES_SCHEMA, maxTokens: 8000 + 3000 * subs.length, tag: 'sprites',
+    const res = await callClaude({ art: true, system: artSystem(), messages: [{ role: 'user', content: user }], schema: SPRITES_SCHEMA, maxTokens: 6000 + 4000 * subs.length, tag: 'sprites', signal: ctl.signal,
       onText: full => completeSprites(full).forEach(apply) });
     completeSprites(res.text || '').forEach(apply);
     if (res.data && Array.isArray(res.data.sprites)) res.data.sprites.forEach(apply);
-  } catch (e) {}
+  } catch (e) { err = e; }
+  finally { ART.ctls.delete(ctl); }
+  const interrupted = err && err.kind === 'cancelled', limited = err && err.kind === 'rate';
+  if (limited) ART.pausedUntil = Date.now() + 45000;
   for (const s of subs) {
     if (done.has(s.n)) continue;
     const cur = G && G.id === gid ? spriteTarget(s.j.kind, s.j.id) : null;
     if (!cur || cur.sprite) continue;
-    cur.tries = (cur.tries || 0) + 1;
-    if (cur.tries < 3) { cur.ss = 'pending'; ART.q.push({ kind: s.j.kind, id: s.j.id, prio: s.j.prio + 1, gid }); }
-    else { cur.ss = 'fail'; refreshSprite(s.j.kind, s.j.id); }
+    // Interrompu pour laisser passer le récit, ou limite d'usage : ce n'est pas un échec du dessin.
+    cur.tries = (cur.tries || 0) + (interrupted || limited ? 0 : 1);
+    if (cur.tries < 3) {
+      cur.ss = 'pending';
+      const job = { kind: s.j.kind, id: s.j.id, prio: interrupted ? s.j.prio : s.j.prio + 1, gid };
+      if (interrupted || limited) ART.q.push(job);
+      else setTimeout(() => { if (G && G.id === gid) { ART.q.push(job); pumpArt(); } }, 3000 * cur.tries);
+    } else { cur.ss = 'fail'; refreshSprite(s.j.kind, s.j.id); }
   }
 }
 function requeueSprites() {
@@ -2241,7 +2267,7 @@ async function act(text) {
 async function runTurn(p) {
   pending = p; setBusy(true);
   let outcome = 'error';
-  try { outcome = await resolveTurn(p); }
+  try { await yieldArtToStory(); outcome = await resolveTurn(p); }
   catch (e) {
     if (e && e.kind === 'cancelled' && !p.intro) { pending = p; dropPending(true); outcome = 'cancel-done'; }
     else showTurnError(e, p);
@@ -2462,16 +2488,27 @@ function renderLog() {
   if (G) G.log.forEach(e => box.append(renderEntry(e)));
   const l = $('#log'); l.style.scrollBehavior = 'auto'; l.scrollTop = l.scrollHeight; l.style.scrollBehavior = '';
 }
-let thinkEl = null;
+let thinkEl = null, thinkTimer = 0;
 const THINK_LINES = ['Le Maître du Jeu réfléchit…', 'Le destin hésite…', 'Le monde retient son souffle…', 'Le narrateur consulte ses notes…', 'Quelque part, un dé roule…'];
 function showThinking(on, label) {
-  if (on) {
-    if (thinkEl) thinkEl.remove();
-    const ctl = label ? null : turnCtl;
-    thinkEl = el('div', { class: 'e-think' }, ic('d20', 26), el('span', { text: label || pick(THINK_LINES) }),
-      ctl ? el('button', { text: 'Arrêter', onclick: () => ctl.abort() }) : null);
-    logBox().append(thinkEl); scrollDown(true);
-  } else if (thinkEl) { thinkEl.remove(); thinkEl = null; }
+  clearInterval(thinkTimer);
+  if (thinkEl) { thinkEl.remove(); thinkEl = null; }
+  if (!on) return;
+  const ctl = label ? null : turnCtl, line = label || pick(THINK_LINES), t0 = Date.now();
+  const span = el('span', { text: line }), sub = el('small', { style: 'display:block;font-family:var(--f-ui);font-style:normal;font-size:12.5px;margin-top:2px' });
+  thinkEl = el('div', { class: 'e-think', role: 'status' }, ic('d20', 26), el('div', { style: 'flex:1;min-width:0' }, span, sub),
+    ctl ? el('button', { text: 'Arrêter', onclick: () => ctl.abort() }) : null);
+  const tick = () => {
+    const sec = Math.round((Date.now() - t0) / 1000);
+    sub.textContent = sec < 3 ? '' : sec + ' s' + (sec >= 20 && S.storyEffort === 'high' ? ' · en réflexion profonde, ça peut prendre une minute' : sec >= 45 ? ' · toujours en route' : '');
+  };
+  tick(); thinkTimer = setInterval(tick, 1000);
+  logBox().append(thinkEl); scrollDown(true);
+}
+// Petit état des dessins en cours, affiché dans le sac.
+function renderArtStatus() {
+  const n = artPending(), box = $('#art-status');
+  if (box) { box.hidden = !n; box.textContent = n ? 'L\'artiste dessine… ' + plural(n, 'dessin') + ' en cours' + (busy && SAMPLE ? ' (en pause pendant le récit)' : '') : ''; }
 }
 function liveNarr() {
   const n = el('div', { class: 'e-narr live' });
@@ -2612,7 +2649,9 @@ function tabInv() {
   const total = G.items.reduce((a, i) => a + i.qty, 0), worth = G.items.reduce((a, i) => a + i.value * i.qty, 0);
   const out = [el('div', { class: 'row', style: 'justify-content:space-between' }, el('h3', { class: 'p-h', text: 'Inventaire' }), G.items.length ? el('select', { class: 'field', id: 'inv-sort', style: 'width:auto;min-height:38px;padding-top:6px;padding-bottom:6px', 'aria-label': 'Trier', onchange: e => { UI.sort = e.target.value; fillInvGrid($('#inv-grid')); } },
       [['recent', 'Récents'], ['type', 'Catégorie'], ['rare', 'Rareté'], ['value', 'Valeur'], ['name', 'Nom']].map(([v, l]) => el('option', { value: v, text: l, selected: UI.sort === v }))) : null),
-    el('p', { class: 'p-sub', text: total ? plural(total, 'objet') + ' · valeur estimée ' + worth + ' ' + T.coin : 'Tu peux tout ramasser : dis simplement ce que tu prends.' })];
+    el('p', { class: 'p-sub', text: total ? plural(total, 'objet') + ' · valeur estimée ' + worth + ' ' + T.coin : 'Tu peux tout ramasser : dis simplement ce que tu prends.' }),
+    el('p', { class: 'hint', id: 'art-status', style: 'margin:-8px 0 12px;color:var(--torch)', hidden: true })];
+  setTimeout(renderArtStatus, 0);
   if (!G.items.length) { out.push(el('div', { class: 'empty', text: 'Ton sac est vide. Pour l\'instant.' })); return out; }
   const counts = {};
   G.items.forEach(i => { counts[i.type] = (counts[i.type] || 0) + 1; });
@@ -2898,7 +2937,11 @@ function buildSettings(inGame, rerender) {
     S.narrLang = e.target.value; saveSettings();
     if (G && inGame) { G.lang = S.narrLang; note('Le joueur souhaite désormais que le récit soit écrit en : ' + S.narrLang + '.'); autosave(); }
   } }, LANGS.map(l => el('option', { value: l, text: l, selected: (inGame && G ? G.lang : S.narrLang) === l })))));
-  out.push(setRow('Modèles', 'Récit : Claude Sonnet 5.5, effort high · Sprites : Claude Haiku 5.5, effort high, dessinés sur le moment', null));
+  const eff = [['low', 'Rapide'], ['medium', 'Équilibrée'], ['high', 'Profonde']];
+  out.push(el('div', { class: 'sp' }), el('label', { class: 'lab', text: 'Réflexion du narrateur (Claude Sonnet 5.5)' }),
+    seg(eff, S.storyEffort, v => { S.storyEffort = v; saveSettings(); rerender(); }),
+    el('p', { class: 'hint', style: 'margin-top:6px', text: 'Plus il réfléchit, plus le récit est fin et cohérent, et plus chaque tour est long. Profonde : souvent 20 à 60 secondes par tour.' }),
+    el('p', { class: 'hint', style: 'margin-top:10px', text: 'Sprites : Claude Haiku 5.5, réglé pour la vitesse. Chacun est dessiné sur le moment pour son sujet, et se met en pause pendant que le narrateur écrit.' }));
   if (TTS) out.push(el('div', { class: 'sec-t', text: 'Voix' }),
     setRow('Lecture automatique', 'Le récit est lu à voix haute à chaque tour', el('button', { class: 'sw' + (S.autoVoice ? ' on' : ''), 'aria-label': 'Lecture automatique', onclick: () => { S.autoVoice = !S.autoVoice; saveSettings(); rerender(); } })),
     setRow('Voix', null, el('select', { class: 'field', id: 'opt-voice', onchange: e => { S.voice = e.target.value; saveSettings(); speak('Voici ma voix de conteur.', 'test'); } },

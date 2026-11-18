@@ -13,9 +13,12 @@ Tout le jeu tient dans un seul fichier : **`vingt-faces.html`**.
 
 ## Modèles
 
-- Récit et arbitrage : `claude-sonnet-5-5`, effort `high`.
-- Sprites : `claude-haiku-5-5`, effort `high`. Chaque sprite est dessiné sur le moment pour cet objet,
-  ce personnage ou ce pouvoir précis, dans la direction artistique du monde ; rien n'est réutilisé d'une partie à l'autre.
+- Récit et arbitrage : `claude-sonnet-5-5`, effort `high` par défaut (réglable dans Options : Rapide, Équilibrée, Profonde).
+- Sprites : `claude-haiku-5-5`, réglé pour la vitesse (effort `low`, sans phase de réflexion), un sprite par appel.
+  Chaque sprite est dessiné sur le moment pour cet objet, ce personnage ou ce pouvoir précis, dans la direction
+  artistique du monde ; rien n'est réutilisé d'une partie à l'autre.
+- Le récit passe toujours en premier : dans Claude, une page n'a qu'environ deux appels simultanés, donc les dessins
+  se mettent en pause (et reprennent ensuite) dès que tu joues.
 
 ## Ce qu'il y a dedans
 
