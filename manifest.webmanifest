@@ -1,0 +1,30 @@
+{
+  "name": "Vingt Faces",
+  "short_name": "Vingt Faces",
+  "description": "Jeu de rôle textuel à la D&D où tout est possible, narré par Claude.",
+  "start_url": "vingt-faces.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1219",
+  "theme_color": "#0f1219",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

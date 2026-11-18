@@ -11,6 +11,17 @@ Tout le jeu tient dans un seul fichier : **`vingt-faces.html`**.
 - **Dans Koder ou un navigateur** : ouvre `vingt-faces.html` et colle ta clé API Anthropic
   (platform.claude.com → API keys). Elle reste sur ton appareil et n'est envoyée qu'à `api.anthropic.com`.
 
+### Sur iPhone, comme une app
+
+1. Active GitHub Pages : sur GitHub, *Settings → Pages → Build and deployment → Deploy from a branch*,
+   branche `main`, dossier `/ (root)`.
+2. Ouvre `https://anthodupre.github.io/Adventure/` dans Safari.
+3. Bouton Partager → **Sur l'écran d'accueil**. Le jeu s'ouvre alors en plein écran, avec son icône.
+
+L'affichage est pensé pour l'iPhone : la barre de saisie reste au-dessus du clavier (le menu se replie pendant
+que tu écris), le panneau se ferme en glissant vers le bas, aucun champ ne déclenche de zoom, et les zones
+de l'encoche et de la barre d'accueil sont respectées.
+
 ## Modèles
 
 - Récit et arbitrage : `claude-sonnet-5-5`, effort `high` par défaut (réglable dans Options : Rapide, Équilibrée, Profonde).

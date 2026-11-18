@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Vingt Faces</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vingt Faces">
+<meta name="theme-color" content="#0f1219">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Lexend:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Jersey+10&display=swap">
@@ -59,7 +68,9 @@ body[data-font="lexend"]{--f-read:"Lexend",system-ui,sans-serif}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;overflow:hidden;
   -webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+button,.hud-nav,.p-tabs,.c-head,.c-foot,#hud,.filters,#choices{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#log,.p-body,.c-body,.m-card,#scr-title{overscroll-behavior:contain}
 input,textarea,select{font:inherit;color:inherit}
 h1,h2,h3,h4,p{margin:0}
 :focus-visible{outline:2px solid var(--torch);outline-offset:2px}
@@ -69,7 +80,8 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block;flex:
 .pix{font-family:var(--f-pix);font-weight:400;letter-spacing:.02em}
 .t-name,.c-top h2,.p-h,.m-title,.d-title,.d-verdict,.devbox h4,.srow .ab,.sbox .ab,.lvl,.god-badge,.tile .e{font-synthesis:none}
 .num{font-variant-numeric:tabular-nums}
-#app{position:fixed;inset:0;height:100%}
+/* iOS : l'app suit la zone réellement visible (le clavier ne recouvre plus la saisie) */
+#app{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);overflow:hidden}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;min-height:0}
 .screen.on{display:flex}
 
@@ -77,13 +89,10 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block;flex:
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:9px 16px;border-radius:var(--rad);
   border:1px solid var(--line2);background:var(--bg3);color:var(--ink);font-weight:700;font-size:15px;line-height:1.2;text-align:center;
   transition:transform .08s,background .15s,border-color .15s}
-.btn:hover{border-color:var(--faint)}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--torch);border-color:var(--torch);color:var(--on-torch)}
-.btn.primary:hover{background:var(--torch2)}
 .btn.danger{border-color:var(--hp2);color:var(--bad)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
-.btn.ghost:hover{border-color:var(--line2)}
 .btn.sm{min-height:36px;padding:6px 12px;border-radius:10px;font-size:14px}
 .btn.block{display:flex;width:100%}
 .btn:disabled{opacity:.45;pointer-events:none}
@@ -144,7 +153,6 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 .c-foot .row{max-width:760px;margin:0 auto}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,158px),1fr));gap:10px}
 .card{position:relative;text-align:left;padding:12px;border-radius:var(--rad);border:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;gap:5px;min-width:0}
-.card:hover{border-color:var(--line2)}
 .card b{font-size:15px;line-height:1.25}
 .card span{font-size:13px;color:var(--dim);line-height:1.4}
 .card .meta{font-size:12px;color:var(--faint);font-weight:700;letter-spacing:.02em}
@@ -285,7 +293,6 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 #choices::-webkit-scrollbar{display:none}
 #choices:empty{display:none}
 .choice{flex:none;max-width:80vw;padding:8px 13px;border-radius:12px;border:1px solid var(--line2);background:var(--bg3);font-size:14px;line-height:1.3;text-align:left;color:var(--ink)}
-.choice:hover{border-color:var(--mood)}
 .inrow{display:flex;gap:8px;align-items:flex-end}
 .dk{width:46px;height:46px;border-radius:14px;border:1px solid var(--line2);background:var(--bg3);display:flex;align-items:center;justify-content:center;flex:none}
 .dk img.px{width:24px;height:24px}
@@ -298,12 +305,14 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 #dock.busy #send,#dock.busy .choice,#dock.busy #act-btn{opacity:.4;pointer-events:none}
 
 /* ---------- panneau ---------- */
-#panel{position:fixed;inset:0;z-index:20;display:none}
+#panel{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:20;display:none}
 #panel.open{display:block}
 .p-scrim{position:absolute;inset:0;background:var(--scrim);animation:fade .2s}
 @keyframes fade{from{opacity:0}}
 .p-card{position:absolute;left:0;right:0;bottom:0;height:92%;background:var(--bg2);border-top:1px solid var(--line2);border-radius:18px 18px 0 0;display:flex;flex-direction:column;animation:slideup .25s cubic-bezier(.2,.8,.2,1);overflow:hidden}
 @keyframes slideup{from{transform:translateY(40px);opacity:0}}
+.p-grab{width:42px;height:5px;border-radius:3px;background:var(--line2);margin:7px auto 0;flex:none}
+.p-card.drag{transition:none;animation:none}
 .p-tabs{display:flex;gap:3px;padding:8px max(8px,env(safe-area-inset-right,0px)) 0 max(8px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);align-items:flex-end}
 .p-tab{flex:1;min-width:0;padding:7px 2px 8px;border-radius:10px 10px 0 0;font-size:12px;font-weight:700;color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid transparent;border-bottom:0}
 .p-tab img.px{width:22px;height:22px}
@@ -321,16 +330,15 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 /* sac */
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:0 calc(-1 * var(--gr)) 10px calc(-1 * var(--gl));padding-left:var(--gl);padding-right:var(--gr);scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
-.filt{flex:none;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;border:1px solid var(--line2);background:var(--bg2);font-size:13.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.filt{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 12px 6px 9px;border-radius:999px;border:1px solid var(--line2);background:var(--bg2);font-size:13.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
 .filt img.px{width:20px;height:20px}
 .filt i{font-style:normal;font-family:var(--f-num);font-weight:700;font-size:12.5px;color:var(--dim)}
 .filt.on{border-color:var(--torch);background:color-mix(in srgb,var(--torch) 14%,var(--bg2));color:var(--ink)}
 .toolbar{display:flex;gap:8px;margin-bottom:12px}
-.toolbar .field{min-height:40px;padding:8px 12px;font-size:15px}
+.toolbar .field{min-height:42px;padding:8px 12px;font-size:16px}
 .invgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
 .tile{position:relative;border:1px solid var(--line);border-radius:var(--rad);background:var(--bg2);padding:10px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:104px;min-width:0;
   box-shadow:inset 0 -3px 0 var(--rar,transparent)}
-.tile:hover{border-color:var(--line2)}
 .tile.eq{border-color:var(--torch)}
 .tile .nm{font-size:12px;line-height:1.25;text-align:center;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;padding:0 2px}
 .tile .q{position:absolute;top:5px;right:5px;font-family:var(--f-num);font-size:12px;font-weight:700;color:var(--on-torch);background:var(--torch);border-radius:5px;padding:0 5px;line-height:17px}
@@ -393,7 +401,6 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 .gauge .track{height:14px}
 .gauge b{font-family:var(--f-num);font-size:17px;white-space:nowrap}
 .li{display:flex;gap:12px;align-items:center;padding:10px 12px 10px 10px;border:1px solid var(--line);border-radius:var(--rad);background:var(--bg2);margin-bottom:8px;text-align:left;width:100%;min-width:0}
-.li:hover{border-color:var(--line2)}
 .li .lt{flex:1;min-width:0}
 .li .lt b{display:block;font-size:15px;line-height:1.3}
 .li .lt span{display:block;font-size:13.5px;color:var(--dim);line-height:1.4}
@@ -440,7 +447,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;max-height:55vh;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2);margin:0}
 
 /* ---------- modales ---------- */
-.modal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim);animation:fade .2s}
+.modal{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:40;display:flex;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim);animation:fade .2s}
 .modal.sheet{align-items:flex-end;padding-bottom:0}
 .m-card{width:min(480px,100%);max-height:92%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--line2);border-radius:18px;padding:18px;animation:pop .22s cubic-bezier(.2,.9,.3,1.2)}
 .modal.sheet .m-card{border-radius:18px 18px 0 0;padding-bottom:calc(18px + var(--sab));animation:slideup .22s cubic-bezier(.2,.8,.2,1)}
@@ -463,7 +470,7 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
 .grave b{display:block;font-size:15px} .grave small{display:block;font-size:13px;color:var(--dim);line-height:1.4}
 
 /* ---------- dé ---------- */
-#dice{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim)}
+#dice{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim)}
 #dice.on{display:flex;animation:fade .2s}
 .d-card{width:min(400px,100%);text-align:center;background:var(--bg2);border:1px solid var(--line2);border-radius:20px;padding:20px 18px 14px;animation:pop .25s cubic-bezier(.2,.9,.3,1.2)}
 .d-kick{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
@@ -500,7 +507,7 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
 .d-cancel{margin-top:8px;font-size:14px;font-weight:700;color:var(--dim);min-height:38px;padding:0 14px}
 
 /* ---------- toasts ---------- */
-#toasts{position:fixed;left:0;right:0;bottom:calc(128px + var(--sab));z-index:60;display:flex;flex-direction:column-reverse;align-items:center;gap:6px;pointer-events:none;padding:0 var(--gr) 0 var(--gl)}
+#toasts{position:absolute;left:0;right:0;bottom:calc(128px + var(--sab));z-index:60;display:flex;flex-direction:column-reverse;align-items:center;gap:6px;pointer-events:none;padding:0 var(--gr) 0 var(--gl)}
 .toast{display:flex;align-items:center;gap:8px;max-width:100%;padding:9px 16px;border-radius:999px;background:var(--bg3);border:1px solid var(--torch2);color:var(--ink);font-size:14px;font-weight:700;box-shadow:0 6px 20px var(--shade);animation:toast 2.8s forwards}
 .toast img.px{width:20px;height:20px}
 @keyframes toast{0%{opacity:0;transform:translateY(10px)}10%,82%{opacity:1;transform:none}100%{opacity:0;transform:translateY(6px)}}
@@ -513,14 +520,27 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
 }
 @media (min-width:1000px){
   #panel{position:static;display:block;width:420px;flex:none;border-left:1px solid var(--line);z-index:1}
-  .p-scrim,.p-close{display:none}
+  .p-scrim,.p-close,.p-grab{display:none}
   .p-card{position:static;height:100%;border-radius:0;border-top:0;animation:none}
   #log{padding:30px max(32px,var(--gr)) 14px max(32px,var(--gl))}
   .hud-nav .hb[data-tab]{display:none}
   .hud-nav{grid-template-columns:repeat(2,1fr)}
 }
+html.kb .hud-nav,html.kb .xpbar,html.kb #foes{display:none!important}
+html.kb #hud{gap:5px;padding-bottom:6px}
+html.kb #dock{padding-bottom:8px}
+html.kb #choices{padding-bottom:6px}
 @media (max-width:359px){ .hb span{display:none} .hb{height:40px} .hud-bars{gap:6px} }
 @media (prefers-reduced-motion:reduce){ *{animation-duration:.01s!important;animation-iteration-count:1!important;transition-duration:.01s!important} }
+@media (hover:hover){
+.btn:hover{border-color:var(--faint)}
+.btn.primary:hover{background:var(--torch2)}
+.btn.ghost:hover{border-color:var(--line2)}
+.card:hover{border-color:var(--line2)}
+.choice:hover{border-color:var(--mood)}
+.tile:hover{border-color:var(--line2)}
+.li:hover{border-color:var(--line2)}
+}
 </style>
 </head>
 <body data-mood="calme" data-skin="nuit" data-font="literata">
@@ -582,7 +602,7 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
           <div id="choices"></div>
           <div class="inrow">
             <button class="dk" id="act-btn" title="Actions rapides" aria-label="Actions rapides">+</button>
-            <textarea id="inp" rows="1" placeholder="Que fais-tu ?" autocomplete="off" autocapitalize="sentences"></textarea>
+            <textarea id="inp" rows="1" placeholder="Que fais-tu ?" autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true" enterkeyhint="send" aria-label="Ton action"></textarea>
             <button class="dk" id="mic" title="Dicter" hidden><img class="px" data-ic="mic" alt=""></button>
             <button id="send" title="Envoyer">➤</button>
           </div>
@@ -591,17 +611,18 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
       <aside id="panel">
         <div class="p-scrim"></div>
         <div class="p-card">
+          <div class="p-grab" aria-hidden="true"></div>
           <nav class="p-tabs" id="p-tabs"></nav>
           <div class="p-body" id="p-body"></div>
         </div>
       </aside>
     </div>
   </section>
+  <div id="toasts"></div>
 </div>
 
 <div id="dice"></div>
 <div id="modals"></div>
-<div id="toasts"></div>
 
 <script>
 'use strict';
@@ -3293,8 +3314,55 @@ function beginAdventure() {
   });
 }
 
+// ---------------------------------------------------------------- iPhone : clavier et gestes
+// Sur iOS, le clavier ne réduit pas la page : on cale l'app sur la zone réellement visible.
+function fitViewport() {
+  const vv = window.visualViewport, r = document.documentElement;
+  if (!vv) return;
+  r.style.setProperty('--vvh', Math.round(vv.height) + 'px');
+  r.style.setProperty('--vvt', Math.round(vv.offsetTop) + 'px');
+  const typing = document.activeElement && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName);
+  const kb = !!typing && window.innerHeight - vv.height > 140;
+  if (kb !== r.classList.contains('kb')) r.classList.toggle('kb', kb);
+  if (kb && document.activeElement === $('#inp')) scrollDown(true);
+}
+function setupViewport() {
+  const vv = window.visualViewport;
+  if (vv) { vv.addEventListener('resize', fitViewport); vv.addEventListener('scroll', fitViewport); }
+  window.addEventListener('focusin', () => setTimeout(fitViewport, 60));
+  window.addEventListener('focusout', () => setTimeout(() => { if (window.scrollY) window.scrollTo(0, 0); fitViewport(); }, 80));
+  window.addEventListener('orientationchange', () => setTimeout(fitViewport, 250));
+  fitViewport();
+}
+// Le panneau se ferme en le glissant vers le bas, depuis sa poignée ou ses onglets.
+function setupSheetDrag() {
+  const card = $('.p-card');
+  let y0 = null, dy = 0;
+  card.addEventListener('touchstart', e => {
+    if (isWide() || !e.target.closest('.p-grab,.p-tabs')) { y0 = null; return; }
+    y0 = e.touches[0].clientY; dy = 0; card.classList.add('drag');
+  }, { passive: true });
+  card.addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    card.style.transform = 'translateY(' + dy + 'px)';
+  }, { passive: true });
+  const end = () => {
+    if (y0 == null) return;
+    y0 = null; card.classList.remove('drag');
+    card.style.transition = 'transform .2s ease-out';
+    if (dy > 90) closePanel();
+    card.style.transform = '';
+    setTimeout(() => { card.style.transition = ''; }, 220);
+  };
+  card.addEventListener('touchend', end);
+  card.addEventListener('touchcancel', end);
+}
+
 // ---------------------------------------------------------------- démarrage
 function init() {
+  setupViewport();
+  setupSheetDrag();
   applyLook();
   fillIcons(document);
   $('#t-new').addEventListener('click', openCreate);
