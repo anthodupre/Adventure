@@ -7,32 +7,30 @@ Tout le jeu tient dans un seul fichier : **`vingt-faces.html`**.
 
 ## Jouer
 
-1. Ouvre `vingt-faces.html` dans Koder (aperçu / preview) ou dans n'importe quel navigateur.
-2. Au premier lancement, colle ta clé API Anthropic (créée sur platform.claude.com → API keys).
-   Elle reste sur ton appareil et n'est envoyée qu'à `api.anthropic.com`.
-3. Crée ton héros, choisis un monde, et écris ce que tu veux.
+- **Dans Claude** : publié comme artifact, le jeu passe par ton compte Claude, sans clé.
+- **Dans Koder ou un navigateur** : ouvre `vingt-faces.html` et colle ta clé API Anthropic
+  (platform.claude.com → API keys). Elle reste sur ton appareil et n'est envoyée qu'à `api.anthropic.com`.
+
+## Modèles
+
+- Récit et arbitrage : `claude-sonnet-5-5`, effort `high`.
+- Sprites : `claude-haiku-5-5`, effort `high`. Chaque sprite est dessiné sur le moment pour cet objet,
+  ce personnage ou ce pouvoir précis, dans la direction artistique du monde ; rien n'est réutilisé d'une partie à l'autre.
 
 ## Ce qu'il y a dedans
 
-- **Tout est possible** : texte libre, le narrateur fixe une difficulté au lieu de refuser.
-- **Dés** : d20 + caractéristique + maîtrise + équipement contre un degré de difficulté ;
-  20 naturel = réussite critique, 1 naturel = échec critique ; avantage / désavantage.
-  C'est le programme qui lance le dé, pas l'IA.
-- **Inventaire réel** : tout ce que tu ramasses devient un objet (quantité, type, valeur, bonus),
-  que tu peux utiliser, équiper, examiner, donner ou jeter.
-- **Sprites générés sur le coup** : chaque objet, chaque sort et le portrait du héros sont
-  dessinés en pixel art 16×16 par l'IA au moment où ils apparaissent.
-- **Magie limitée** : mana, coût par sort, magie improvisée plus chère et plus risquée,
-  surcharge payée en points de vie, mana qui ne revient qu'avec le repos.
-- **Vie, mort, niveaux** : points de vie, jet de la dernière chance à 0 PV, XP, niveaux,
-  points de caractéristique, statuts, quêtes, lieux visités, chronique.
-- **Sauvegardes** : automatique à chaque tour, bouton 💾, 3 emplacements, export / import par code.
-- **DEV** : Réglages → DEV → code `BURGER` → mode dieu (immortel, mana et or infinis, dé forcé)
-  et outils de test.
-
-## Technique
-
-- Modèle : `claude-sonnet-5-5`. Ouverte ailleurs que dans Claude, la page appelle l'API avec ta clé (effort `low`).
-  Publiée comme artifact dans Claude, elle passe par ton compte Claude, sans clé (effort `medium`).
-- Sorties structurées (JSON) pour l'arbitrage, streaming pour le récit, cache de prompt pour le coût.
-- Aucune dépendance, aucun fichier externe.
+- **21 mondes + un monde sur mesure**, chacun avec ses 10 archétypes, son vocabulaire (nom des pouvoirs, de l'énergie,
+  de la monnaie) et sa direction artistique. Archétype sur mesure possible (profil, caractéristiques fortes, compétences).
+- **10 situations de départ**, ou la tienne.
+- **Dés** : d20 + caractéristique + maîtrise de compétence (22 compétences) + équipement, contre une difficulté ;
+  20 naturel = réussite critique, 1 naturel = échec critique ; avantage / désavantage. C'est le programme qui lance le dé.
+- **Inventaire réel** en 14 catégories, 5 raretés, filtres, tri, recherche, et 6 emplacements d'équipement.
+- **Pouvoirs limités** : coût en énergie, pouvoirs improvisés plus chers, surcharge payée en points de vie.
+- **Combat** : bandeau des adversaires avec leurs points de vie.
+- **Monde** : quêtes, personnages rencontrés (avec portraits et attitude), factions et réputation,
+  carte des lieux visités qui se dessine toute seule, chronique, notes personnelles.
+- **Progression** : niveaux, points de caractéristique, nouvelles compétences, 18 succès, Panthéon des héros tombés.
+- **Lecture** : thèmes Nuit / Parchemin / Contraste / Auto, trois polices de récit, taille et interligne réglables.
+  Dans Claude : lecture à voix haute et dictée quand l'appareil le permet.
+- **Sauvegardes** : automatique à chaque tour, bouton Sauver, 3 emplacements, export / import par code.
+- **DEV** : Options → DEV → code `BURGER` → mode dieu (immortel, énergie et argent infinis, dé forcé) et outils de test.
