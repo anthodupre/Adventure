@@ -18,9 +18,11 @@ Tout le jeu tient dans un seul fichier : **`vingt-faces.html`**.
 2. Ouvre `https://anthodupre.github.io/Adventure/` dans Safari.
 3. Bouton Partager → **Sur l'écran d'accueil**. Le jeu s'ouvre alors en plein écran, avec son icône.
 
-L'affichage est pensé pour l'iPhone : la barre de saisie reste au-dessus du clavier (le menu se replie pendant
-que tu écris), le panneau se ferme en glissant vers le bas, aucun champ ne déclenche de zoom, et les zones
-de l'encoche et de la barre d'accueil sont respectées.
+L'affichage est pensé pour l'iPhone, et vérifié aux dimensions de l'iPhone 18 Pro (402 × 874 points, portrait
+et paysage) : le jeu occupe tout l'écran même en web app d'écran d'accueil (où iOS sous-estime la zone visible,
+bug WebKit 254868), la barre de saisie colle au clavier (le menu se replie pendant que tu écris), le panneau se
+ferme en glissant vers le bas, aucun champ ne déclenche de zoom, et la Dynamic Island, l'heure et la barre
+d'accueil sont respectées, avec des marges de secours si iOS ne les fournit pas. En paysage, l'interface se resserre.
 
 ## Modèles
 

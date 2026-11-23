@@ -80,8 +80,8 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block;flex:
 .pix{font-family:var(--f-pix);font-weight:400;letter-spacing:.02em}
 .t-name,.c-top h2,.p-h,.m-title,.d-title,.d-verdict,.devbox h4,.srow .ab,.sbox .ab,.lvl,.god-badge,.tile .e{font-synthesis:none}
 .num{font-variant-numeric:tabular-nums}
-/* iOS : l'app suit la zone réellement visible (le clavier ne recouvre plus la saisie) */
-#app{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);overflow:hidden}
+/* iOS : l'app occupe tout l'écran ; seul le clavier, quand il est ouvert, en retire le bas */
+#app{position:fixed;left:0;right:0;top:var(--vvt,0px);bottom:var(--kbh,0px);overflow:hidden}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;min-height:0}
 .screen.on{display:flex}
 
@@ -305,7 +305,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 #dock.busy #send,#dock.busy .choice,#dock.busy #act-btn{opacity:.4;pointer-events:none}
 
 /* ---------- panneau ---------- */
-#panel{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:20;display:none}
+#panel{position:fixed;left:0;right:0;top:var(--vvt,0px);bottom:var(--kbh,0px);z-index:20;display:none}
 #panel.open{display:block}
 .p-scrim{position:absolute;inset:0;background:var(--scrim);animation:fade .2s}
 @keyframes fade{from{opacity:0}}
@@ -461,7 +461,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:p
 pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;max-height:55vh;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink2);margin:0}
 
 /* ---------- modales ---------- */
-.modal{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:40;display:flex;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim);animation:fade .2s}
+.modal{position:fixed;left:0;right:0;top:var(--vvt,0px);bottom:var(--kbh,0px);z-index:40;display:flex;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim);animation:fade .2s}
 .modal.sheet{align-items:flex-end;padding-bottom:0}
 .m-card{width:min(480px,100%);max-height:92%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--line2);border-radius:18px;padding:18px;animation:pop .22s cubic-bezier(.2,.9,.3,1.2)}
 .modal.sheet .m-card{border-radius:18px 18px 0 0;padding-bottom:calc(18px + var(--sab));animation:slideup .22s cubic-bezier(.2,.8,.2,1)}
@@ -484,7 +484,7 @@ pre.dump{font-family:var(--f-mono);font-size:11px;line-height:1.4;background:var
 .grave b{display:block;font-size:15px} .grave small{display:block;font-size:13px;color:var(--dim);line-height:1.4}
 
 /* ---------- dé ---------- */
-#dice{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim)}
+#dice{position:fixed;left:0;right:0;top:var(--vvt,0px);bottom:var(--kbh,0px);z-index:50;display:none;align-items:center;justify-content:center;padding:calc(16px + var(--sat)) var(--gr) calc(16px + var(--sab)) var(--gl);background:var(--scrim)}
 #dice.on{display:flex;animation:fade .2s}
 .d-card{width:min(400px,100%);text-align:center;background:var(--bg2);border:1px solid var(--line2);border-radius:20px;padding:20px 18px 14px;animation:pop .25s cubic-bezier(.2,.9,.3,1.2)}
 .d-kick{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
@@ -545,6 +545,33 @@ html.kb #hud{gap:5px;padding-bottom:6px}
 html.kb #dock{padding-bottom:8px}
 html.kb #choices{padding-bottom:6px}
 @media (max-width:359px){ .hb span{display:none} .hb{height:40px} .hud-bars{gap:6px} }
+/* Web app d'écran d'accueil sur iPhone à Dynamic Island (17 Pro, 18 Pro…) : marges de secours si iOS ne fournit pas
+   celles de l'encoche et de la barre d'accueil en portrait (bug WebKit 306465). Elles ne s'ajoutent pas : max(). */
+@media (display-mode:standalone) and (orientation:portrait) and (min-height:780px){
+  :root{--sat:max(env(safe-area-inset-top,0px),50px);--sab:max(env(safe-area-inset-bottom,0px),20px)}
+}
+/* Thème Parchemin en web app : l'heure et la batterie (texte blanc) restent lisibles sur une bande sombre. */
+@media (display-mode:standalone){
+  body[data-skin="parchemin"]::before{content:"";position:fixed;left:0;right:0;top:0;height:var(--sat);background:#20180f;z-index:100;pointer-events:none}
+}
+/* Paysage sur téléphone (≈ 874 × 402 points sur un 18 Pro) : interface resserrée pour laisser la place au récit. */
+@media (orientation:landscape) and (max-height:500px){
+  #hud{row-gap:5px;padding-top:calc(5px + var(--sat));padding-bottom:5px}
+  .hud-loc small{display:none}
+  .hb{height:36px} .hb span{display:none} .hb img.px{width:20px;height:20px}
+  .track{height:16px}
+  #log{padding-top:12px}
+  #choices{padding-bottom:6px}
+  #dock{padding-top:6px}
+  .p-card{height:96%}
+  .t-die{width:80px;height:80px;margin-bottom:6px}
+  .t-name{font-size:52px} .t-name br{display:none}
+  .t-sub{margin:8px 0 14px}
+  .d-card{padding:12px 14px 10px;max-height:100%;overflow-y:auto}
+  .d20{width:88px;height:88px} .d-dice.two .d20{width:76px;height:76px} .d-dice{margin:6px 0 2px}
+  .d-reason{margin-bottom:6px}
+  html.kb #hud,html.kb #choices{display:none!important}
+}
 @media (prefers-reduced-motion:reduce){ *{animation-duration:.01s!important;animation-iteration-count:1!important;transition-duration:.01s!important} }
 @media (hover:hover){
 .mcell:hover .mfog{border-color:var(--torch);color:var(--torch)}
@@ -1035,6 +1062,8 @@ function applyLook() {
   b.setAttribute('data-font', S.font);
   document.documentElement.style.setProperty('--fs', S.textSize + 'px');
   document.documentElement.style.setProperty('--lh', S.lh === 'serre' ? '1.45' : S.lh === 'aere' ? '1.85' : '1.62');
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', skin === 'parchemin' ? '#f1e9d8' : skin === 'contraste' ? '#000000' : '#0f1219');
 }
 
 // ---------------------------------------------------------------- sons (WebAudio, aucun fichier)
@@ -1230,8 +1259,26 @@ function feedSSE(acc, state, chunk) {
     acc.handle(ev);
   }
 }
+// Le serveur compile le schéma de réponse en grammaire ; trop de listes de choix la rendent trop grosse (erreur 400
+// « compiled grammar is too large »). On lui envoie donc une version allégée — des textes libres, sans alternatives —
+// tandis que les valeurs permises sont décrites au narrateur et vérifiées par le jeu à la réception.
+function liteSchema(sc) {
+  if (!sc || typeof sc !== 'object') return sc;
+  if (sc.anyOf) return liteSchema(sc.anyOf.find(x => x.type !== 'null') || sc.anyOf[0]);
+  if (sc.enum) return { type: 'string' };
+  if (sc.type === 'object') {
+    const p = {};
+    for (const k in sc.properties) p[k] = liteSchema(sc.properties[k]);
+    return { type: 'object', additionalProperties: false, required: Object.keys(p), properties: p };
+  }
+  if (sc.type === 'array') return { type: 'array', items: liteSchema(sc.items) };
+  return Object.assign({}, sc);
+}
+const formatHint = sc => '\n\n# Format de réponse\nTa réponse est lue par un programme : réponds uniquement par un objet JSON, sans texte autour ni bloc de code. Il contient exactement ces champs, dans cet ordre (une barre verticale sépare les valeurs permises, 0 désigne un nombre entier) :\n' + schemaHint(sc);
+let API_NO_GRAMMAR = false;   // devient vrai si l'API refuse quand même la grammaire : on décrit alors le format sans l'imposer
 function mapApiError(status, er) {
   const type = (er && er.type) || '', msg = (er && er.message) || '';
+  if (status === 400 && /grammar|schema.*(too|complex)/i.test(msg)) return new ApiError(msg, 'grammar', status);
   if (status === 401) return new ApiError('Clé API refusée. Vérifie ta clé Anthropic dans les options.', 'auth', status);
   if (status === 403) return new ApiError('Cette clé API n\'a pas accès à ce modèle. ' + msg, 'auth', status);
   if (status === 429) return new ApiError('Limite de requêtes atteinte. Patiente quelques secondes.', 'rate', status);
@@ -1247,10 +1294,10 @@ async function callApi(opt) {
     model, max_tokens: opt.maxTokens || 16000, stream: true,
     output_config: { effort: opt.art ? 'low' : S.storyEffort },
     // Le prompt système est stable pendant toute la partie : on le met en cache.
-    system: [{ type: 'text', text: opt.system, cache_control: { type: 'ephemeral' } }],
+    system: [{ type: 'text', text: opt.system + (opt.schema ? formatHint(opt.schema) : ''), cache_control: { type: 'ephemeral' } }],
     messages: opt.messages
   };
-  if (opt.schema) body.output_config.format = { type: 'json_schema', schema: opt.schema };
+  if (opt.schema && !API_NO_GRAMMAR) body.output_config.format = { type: 'json_schema', schema: liteSchema(opt.schema) };
   // L'artiste dessine sans réfléchir d'abord : le premier pixel arrive tout de suite.
   if (opt.art) body.thinking = { type: 'disabled' };
   const headers = { 'content-type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': API_VERSION, 'anthropic-dangerous-direct-browser-access': 'true' };
@@ -1378,6 +1425,7 @@ async function callClaude(opt) {
     catch (e) {
       last = e;
       if (e.kind === 'fallback-unsupported' && S.useFallbacks) { S.useFallbacks = false; saveSettings(); attempt--; continue; }
+      if (e.kind === 'grammar' && opt.schema && !API_NO_GRAMMAR) { API_NO_GRAMMAR = true; attempt--; continue; }
       const retry = e.kind === 'network' || e.kind === 'overloaded' || e.kind === 'rate' || e.kind === 'server';
       if (!retry || attempt === 2) throw e;
       await sleep(1300 * (attempt + 1) * (attempt + 1));
@@ -1755,9 +1803,9 @@ Chaque message du joueur contient :
 
 Tu réponds de l'une de ces deux façons :
 1. Demander un jet (needs_roll = true) quand l'issue est incertaine et que réussir ou échouer change vraiment la suite : combat, acrobatie, discrétion, persuasion risquée, pouvoir, effort physique, ramasser quelque chose de lourd, fixé, gardé ou dangereux… Remplis « roll », écris dans « narrative » une ou deux phrases de mise en tension qui s'arrêtent juste avant l'issue, et laisse tout le reste neutre (0, listes vides, rest « aucun », ending « aucune », location et time_of_day inchangés).
-2. Raconter directement (needs_roll = false, roll = null) quand l'action est banale, sans risque, ou relève de la simple conversation ou de l'observation.
+2. Raconter directement (needs_roll = false, roll = null — ou, si un objet est exigé, stat FOR, skill aucune, dc 0, reason vide, mana_cost 0, advantage normal) quand l'action est banale, sans risque, ou relève de la simple conversation ou de l'observation.
 
-Quand [JET] est présent, le dé est déjà lancé : needs_roll = false, roll = null, et tu racontes l'issue en respectant strictement le verdict.
+Quand [JET] est présent, le dé est déjà lancé : needs_roll = false, roll neutre comme ci-dessus, et tu racontes l'issue en respectant strictement le verdict.
 - RÉUSSITE CRITIQUE : succès éclatant, avec un bonus inattendu.
 - RÉUSSITE : l'action réussit comme voulu.
 - ÉCHEC DE PEU : c'est raté, mais avec un petit quelque chose (progrès partiel, ou réussite avec un coût).
@@ -3449,13 +3497,19 @@ function beginAdventure() {
 
 // ---------------------------------------------------------------- iPhone : clavier et gestes
 // Sur iOS, le clavier ne réduit pas la page : on cale l'app sur la zone réellement visible.
+// En web app d'écran d'accueil, iOS rapporte une zone visible plus petite que l'écran, même sans clavier
+// (bug WebKit 254868). On mesure cet écart au repos et on ne retire ensuite que la hauteur réelle du clavier :
+// sans clavier, le jeu occupe toujours tout l'écran.
+let vvBase = null;
 function fitViewport() {
   const vv = window.visualViewport, r = document.documentElement;
   if (!vv) return;
-  r.style.setProperty('--vvh', Math.round(vv.height) + 'px');
-  r.style.setProperty('--vvt', Math.round(vv.offsetTop) + 'px');
-  const typing = document.activeElement && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName);
-  const kb = !!typing && window.innerHeight - vv.height > 140;
+  const typing = !!document.activeElement && /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName);
+  const gap = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+  if (!typing || vvBase == null) vvBase = typing ? 0 : gap;
+  const kbh = typing ? Math.max(0, gap - vvBase) : 0, kb = kbh > 120;
+  r.style.setProperty('--kbh', kb ? Math.round(kbh) + 'px' : '0px');
+  r.style.setProperty('--vvt', kb ? Math.round(vv.offsetTop) + 'px' : '0px');
   if (kb !== r.classList.contains('kb')) r.classList.toggle('kb', kb);
   if (kb && document.activeElement === $('#inp')) scrollDown(true);
 }
